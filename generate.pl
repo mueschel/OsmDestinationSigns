@@ -20,6 +20,7 @@ my $q = CGI->new;
 my $data, my $db;
 my $entries;
 my $out;
+$out->{error} = '';
 
 #################################################
 ## Read and organize data
@@ -140,14 +141,31 @@ sub isWayNode {
 
 #Helper: find a way the given node is on
 sub findWayfromNode {
-  my $n = shift @_;
-  foreach my $w  (keys %{$db->{way}}) {
+  my ($n,$match) =  @_;
+  $match //= 0;
+  foreach my $w  (sort keys %{$db->{way}}) {
     if(isWayNode($n,$w)>=0) {
-      return $w;
+      return $w if 0==$match--;
       }
     }
   return 0;  
   }  
+
+#Find intersection by common point in to and from ways  
+sub searchIntersection {
+  my ($s) = @_;
+  return unless $s->{to};
+  return unless $s->{from};
+  if($db->{way}{$s->{to}}{'nodes'}[0] == $db->{way}{$s->{from}}{'nodes'}[0] || 
+     $db->{way}{$s->{to}}{'nodes'}[0] == $db->{way}{$s->{from}}{'nodes'}[-1]){
+    return $db->{way}{$s->{to}}{'nodes'}[0];
+    }
+  if($db->{way}{$s->{to}}{'nodes'}[-1] == $db->{way}{$s->{from}}{'nodes'}[0] || 
+     $db->{way}{$s->{to}}{'nodes'}[-1] == $db->{way}{$s->{from}}{'nodes'}[-1]){
+    return $db->{way}{$s->{to}}{'nodes'}[-1];
+    }
+  }
+  
   
 #Take destination string, add destination:lang:XX (if not already in string)
 sub DestinationString {
@@ -244,8 +262,17 @@ sub parseData {
         }
       }
     
-    $s->{dir} = getDirection($s);
-    $s->{wayref}  = getRef($s);
+    $s->{intersection} //= searchIntersection($s);
+    $s->{dir}            = getDirection($s);
+    $s->{wayref}         = getRef($s);
+    
+    #If to or from node is part of from or to way resp., search for better to or from way
+    if($s->{tonode} && $s->{to} == $s->{from}) {
+      $s->{to} = findWayfromNode($s->{tonode},1);
+      }
+    if($s->{fromnode} && $s->{to} == $s->{from}) {
+      $s->{from} = findWayfromNode($s->{to},1);
+      }      
     foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
       $s->{dest} = DestinationString($w,$i);
       $s->{dura} = getTimeDistance($w,$i);
@@ -302,3 +329,4 @@ $out->{lat} = $db->{node}{$q->param('nodeid')}{lat};
 $out->{lon} = $db->{node}{$q->param('nodeid')}{lon};
 
 print  encode_json($out);
+# #     $out->{error} .= $s->{intersection}.' ' ;

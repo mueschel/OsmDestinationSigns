@@ -22,6 +22,7 @@ print <<HDOC;
 <p>Please enter an Id of an intersection node or a guidepost.
 <br>Click on the arrow to get to the corresponding OSM object.
 <br>Here is <a href="http://overpass-turbo.eu/s/n1p">a overpass query</a> with interesting nodes - blue dots have relations.
+<br>The code is available on <a href="https://github.com/mueschel/OsmDestinationSigns">Github</a>.
 <div class="config">
 <h3>Configuration</h3>
 <form action="" onsubmit="getsign(0); return false;">

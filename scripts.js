@@ -27,7 +27,7 @@ function updatemap(d) {
   var data;
   try {
     data = JSON.parse(d);
-    document.getElementById('container').innerHTML = data.html;
+    document.getElementById('container').innerHTML = data.error + data.html;
     if(map){
       map.removeLayer(marker);
       marker = L.marker([data.lat, data.lon]).addTo(map);
