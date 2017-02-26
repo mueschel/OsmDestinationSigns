@@ -1,0 +1,94 @@
+body {
+  background: #f2f5f7;
+  font-size: 12px;
+  font-family: sans-serif;
+  min-width: 1200px; 
+}
+
+div {
+  box-sizing:border-box;
+  }
+
+div.config {
+  display: block;
+  width: 400px;
+  float: left;
+  background: #f7f5f2;
+  border: 1px solid #aaa;
+  margin: 2px; }
+
+  
+  
+#map {
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:300px;
+  height:300px;
+  border:1px solid white;
+  z-index:10;
+  box-shadow:3px 3px 3px #aaa;
+/*   visibility:hidden; */
+  }  
+  
+div.entry {
+  background:white;
+  border:1px solid #aaa;
+  width:400px;
+  min-height:50px;
+  line-height:50px;
+  vertical-align:middle;
+  position:relative;
+  
+  
+  div.compass {
+    display:inline-block;
+    font-size:40px;
+    float:left;
+    width:40px;
+    cursor:pointer;
+    }
+
+    
+  span.dest {
+    display:inline-block;
+    font-size:16px;
+    width:250px;
+    line-height: normal;
+    vertical-align: middle;
+    margin-left:8px;
+    }
+  
+  div.detail {
+    float:right;
+    font-size:12px;
+    margin-right:8px;
+    margin-top:5px;
+    text-align:right;
+    line-height:20px;
+    }
+  span.ref, span.dura {
+    }
+  
+  }
+  
+div.details {
+  background:white;
+  border:1px solid #aaa;
+  width:400px;
+  margin-top:5px; 
+  text-align:right;
+  padding:5px;
+  
+  span {
+    display:block;
+    }
+  }  
+
+  
+
+
+
+
+
+  
