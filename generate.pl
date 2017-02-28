@@ -11,6 +11,7 @@ use Encode qw(encode from_to);
 use URI::Escape qw(uri_unescape uri_escape);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
+use List::Util qw(min max);
 use Math::Trig;
 use Encode;
 
@@ -29,7 +30,7 @@ $out->{error} = '';
 sub readData {
   my $input = shift @_;
    my $url = 'http://overpass-api.de/api/interpreter';
-#  my $url = "http://localhost/destination/$input.json";
+#  my $url = "http://localhost/destinationsign/$input.json";
   my $st = shift @_ || 0;
   my $json;
   
@@ -97,10 +98,10 @@ sub getDirection {
     if($db->{way}{$s->{to}}){
       my @ns = @{$db->{way}{$s->{to}}{nodes}};
       if ($ns[0] == $s->{intersection}) {
-        $o = calcDirection($ns[0],$ns[1]);
+        $o = calcDirection($ns[0],$ns[min(scalar @ns-1, 3)]);
         }
       elsif ($ns[-1] == $s->{intersection}) {
-        $o = calcDirection($ns[-1],$ns[-2]);
+        $o = calcDirection($ns[-1],$ns[-min(scalar @ns,4)]);
         }
       }
     }
@@ -209,10 +210,18 @@ sub getRef {
         }
       }
     } 
-  $o =~ s/;/ /g;   
+  $o =~ s/;/<br>/g;   
   return $o;
   }
 
+sub getSymbol {
+  my ($r,$num) = @_;
+  $num //= 0;
+  my @t = split(';',$db->{relation}{$r}{'tags'}{'destination:symbol'});
+  if($t[$num]) {
+    return $t[$num];
+    }  
+  }
   
 sub getTimeDistance {
   my ($r,$num) = @_;
@@ -276,28 +285,36 @@ sub parseData {
     foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
       $s->{dest} = DestinationString($w,$i);
       $s->{dura} = getTimeDistance($w,$i);
+      $s->{symbol} = getSymbol($w,$i);
 
       my $o;
       $o = "<div class=\"entry\" style=\"";
       $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:text'}.";" if $db->{relation}{$w}{'tags'}{'colour:text'}; 
       $o .= "background:".$db->{relation}{$w}{'tags'}{'colour:back'}.";" if $db->{relation}{$w}{'tags'}{'colour:back'}; 
       $o .= "\">";
-      if($s->{dir} != -1000) {
-        $o .= "<div class=\"compass\" style=\"transform: rotate($s->{dir}deg);";
-        $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:arrow'}.";" if $db->{relation}{$w}{'tags'}{'colour:arrow'}; 
-        $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">&#10137;</div>";
+      
+    
+      $o .= "<div class=\"compass\" style=\"";
+      $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:arrow'}.";" if $db->{relation}{$w}{'tags'}{'colour:arrow'}; 
+      $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
+      if($s->{dir} != -1000) {  
+        $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
         }
       else {
-        $o .= "<div class=\"compass\"  
-              onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">&nbsp;?&nbsp;</div>";
+        $o .= "<div>?</div>";
         }
-      $o .= "<span class=\"dest\">$s->{dest}</span>";
-      $o .= "<div class=\"detail\"><span class=\"ref\">$s->{wayref}</span><br>";
-      $o .= "<span class=\"dura\">$s->{dura}</span></div>";
+      $o .= '</div>';  
+        
+        
+      $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
+      $o .= "<div class=\"dest\">$s->{dest}</div>";
+      
+      $o .= "<div class=\"dura\">$s->{dura}</div>";
+      $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
       $o .= "</div>";
       $entries->{$s->{dir}.$s->{dest}.$i} = $o;
       }
-    
+
     my $o = '';
     unless($entries->{'Z'.$s->{sign}}) {
       $o .= "<span><a href=\"".$db->{node}{$s->{sign}}{'tags'}{'image'}."\">Image</a></span>" if $db->{node}{$s->{sign}}{'tags'}{'image'};

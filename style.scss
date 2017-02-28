@@ -36,42 +36,59 @@ div.entry {
   border:1px solid #aaa;
   width:400px;
   min-height:50px;
-  line-height:50px;
+  height:50px;
+/*   line-height:50px; */
   vertical-align:middle;
   position:relative;
   
   
   div.compass {
-    display:inline-block;
+    float:left;
     font-size:40px;
     float:left;
     width:40px;
     cursor:pointer;
+    text-align:center;
     }
-
     
-  span.dest {
-    display:inline-block;
+  div.dest {
+/*     display:inline-block; */
     font-size:16px;
     width:250px;
-    line-height: normal;
-    vertical-align: middle;
     margin-left:8px;
+    float:left;
+    position:relative;
+    top:50%;
+    transform: translateY(-50%);
     }
   
-  div.detail {
-    float:right;
-    font-size:12px;
-    margin-right:8px;
-    margin-top:5px;
-    text-align:right;
-    line-height:20px;
-    }
-  span.ref, span.dura {
-    }
-  
+div.ref {
+  float:left;
+    position:relative;
+    top:50%;
+    min-width:30px;
+    text-align:center;
+    transform: translateY(-50%);
   }
   
+  div.symbol {
+    position:absolute;
+    height:30px;
+    top:3px;
+    right:5px;
+    }  
+  @import 'symbols'; 
+
+  }
+  
+div.dura {
+  position:absolute;
+  right:5px;
+  bottom:2px;
+  line-height: normal;
+  }
+ 
+ 
 div.details {
   background:white;
   border:1px solid #aaa;
