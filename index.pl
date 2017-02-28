@@ -25,13 +25,13 @@ print <<HDOC;
 <br>The code is available on <a href="https://github.com/mueschel/OsmDestinationSigns">Github</a>.
 <div class="config">
 <h3>Configuration</h3>
-<form action="" onsubmit="getsign(0); return false;">
+<div><form action="" onsubmit="getsign(0); return false;">
   <label title="Id of an intersection or guidepost node">Node Id: 
     <input type="text" name="nodeid"></label> 
-</form>
+<!-- </form>-->
 <!--<br><label title="Select output styles">Styles <select name="style" multiple="multiple"><option>compass<option>image</select></label>-->
-<form action="" onsubmit="getsign(0); return false;">
-  <label title="Some Examples">Examples: 
+<!--<form action="" return false;">-->
+  <br><label title="Some Examples">Examples: 
     <select name="nodeid" onChange="getsign(1);">
       <option value="3731895314">3731895314 - bi-lingual
       <option value="1938162531">1938162531
@@ -48,7 +48,11 @@ print <<HDOC;
       <option value="3906804369">3906804369 - with Mapillary
       <option value="1670509673">1670509673 - from way, no intersection
       <option value="3314100014">3314100014 - at a motorway
-    </select>
+      <option value="3733676910">3733676910 - way part of a named route
+    </select></div>
+    <div><input type="checkbox" name="namedroutes"> Add names of routes</input>
+    <br><input type="checkbox" name="fromarrow" disabled> Show arrows as seen from 'from' way</input>
+    </div>
 </form>
 </div>
 </div>

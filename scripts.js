@@ -45,8 +45,12 @@ function updatemap(d) {
 function getsign(t) {
   var url = 'generate.pl?';
   var node = document.getElementsByName('nodeid')[t].value;
+  var namedroutes = document.getElementsByName('namedroutes')[0].checked;
+  var fromarrow = document.getElementsByName('fromarrow')[0].checked;
   
   url += 'nodeid='+node;
+  url += '&namedroutes='+namedroutes
+  url += '&fromarrow='+fromarrow
   getData(url,'',updatemap);
   }
 

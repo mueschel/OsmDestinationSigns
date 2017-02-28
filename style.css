@@ -9,11 +9,14 @@ div {
 
 div.config {
   display: block;
-  width: 400px;
+  width: 80%;
   float: left;
   background: #f7f5f2;
   border: 1px solid #aaa;
   margin: 2px; }
+  div.config div {
+    width: 300px;
+    float: left; }
 
 #map {
   position: fixed;
@@ -30,34 +33,51 @@ div.entry {
   background: white;
   border: 1px solid #aaa;
   width: 400px;
-  min-height: 50px;
+  /*   min-height:50px; */
   height: 50px;
-  /*   line-height:50px; */
   vertical-align: middle;
-  position: relative; }
+  position: relative;
+  overflow: hidden;
+  display: table; }
+  div.entry div.entry div.b {
+    position: relative;
+    width: 100%;
+    height: 100%; }
   div.entry div.compass {
-    float: left;
+    /*     float:left; */
     font-size: 40px;
-    float: left;
     width: 40px;
     cursor: pointer;
-    text-align: center; }
+    text-align: center;
+    display: table-cell;
+    vertical-align: middle;
+    /*     position:relative; */
+    /*     top:50%; */
+    /*     transform: translateY(-50%); */ }
   div.entry div.dest {
     /*     display:inline-block; */
     font-size: 16px;
     width: 250px;
-    margin-left: 8px;
-    float: left;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%); }
+    margin: auto 8px;
+    height: 100%;
+    /*     float:left; */
+    display: table-cell;
+    vertical-align: middle;
+    /*     position:relative; */
+    /*     top:50%; */
+    /*     transform: translateY(-50%); */ }
+  div.entry div.dest span {
+    font-size: 80%; }
   div.entry div.ref {
-    float: left;
-    position: relative;
-    top: 50%;
-    min-width: 30px;
-    text-align: center;
-    transform: translateY(-50%); }
+    /*     float:left; */
+    /*     display:inline-block; */
+    /*     position:relative; */
+    /*     top:50%; */
+    width: 30px;
+    display: table-cell;
+    vertical-align: middle;
+    /*     text-align:center; */
+    /*     transform: translateY(-50%); */ }
   div.entry div.symbol {
     position: absolute;
     height: 30px;
@@ -99,12 +119,11 @@ div.entry {
     background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/92/Ferry.png"); }
   div.entry div.centre {
     background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/2a/Italian_traffic_signs_-_icona_centro.svg"); }
-
-div.dura {
-  position: absolute;
-  right: 5px;
-  bottom: 2px;
-  line-height: normal; }
+  div.entry div.dura {
+    position: absolute;
+    right: 5px;
+    bottom: 2px;
+    line-height: normal; }
 
 div.details {
   background: white;

@@ -166,7 +166,24 @@ sub searchIntersection {
     return $db->{way}{$s->{to}}{'nodes'}[-1];
     }
   }
+
   
+sub getNamedWay {
+  my ($s) = @_;
+  my $o;
+  foreach my $r (keys %{$db->{relation}}) { 
+    if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
+        $db->{relation}{$r}{'tags'}{'route'} eq 'hiking') {
+      if (isRelationMember('way',$s->{to},$r)) { 
+        if ($db->{relation}{$r}{'tags'}{'name'}) {
+          $o .= '<br>' if $o;
+          $o .= $db->{relation}{$r}{'tags'}{'name'};
+          }
+        }
+      }
+    }
+  return $o;  
+  }
   
 #Take destination string, add destination:lang:XX (if not already in string)
 sub DestinationString {
@@ -193,22 +210,24 @@ sub getRef {
   if ($db->{relation}{$s->{id}}{'tags'}{'destination:ref'}) {
     $o = $db->{relation}{$s->{id}}{'tags'}{'destination:ref'};
     }
-  #ref from ref on to-way  
-  elsif ($db->{way}{$s->{to}}{'tags'}{'ref'}) {
-    $o = $db->{way}{$s->{to}}{'tags'}{'ref'};
-    }
-  #ref from relation to-way belongs to
   else {
+    #ref from ref on to-way  
+    my @out;
+    if ($db->{way}{$s->{to}}{'tags'}{'ref'}) {
+      push(@out,$db->{way}{$s->{to}}{'tags'}{'ref'});
+      }
+    #ref from relation to-way belongs to
     foreach my $r (keys %{$db->{relation}}) { 
       if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
           $db->{relation}{$r}{'tags'}{'route'} eq 'hiking') {
         if (isRelationMember('way',$s->{to},$r)) {    
           if ($db->{relation}{$r}{'tags'}{'ref'}) {
-            $o = $db->{relation}{$r}{'tags'}{'ref'};
+            push(@out,$db->{relation}{$r}{'tags'}{'ref'});
             }
           } 
         }
       }
+    $o = join (';',uniq(@out));  
     } 
   $o =~ s/;/<br>/g;   
   return $o;
@@ -284,6 +303,8 @@ sub parseData {
       }      
     foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
       $s->{dest} = DestinationString($w,$i);
+      $s->{wayname} = getNamedWay($s);
+  
       $s->{dura} = getTimeDistance($w,$i);
       $s->{symbol} = getSymbol($w,$i);
 
@@ -307,7 +328,9 @@ sub parseData {
         
         
       $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
-      $o .= "<div class=\"dest\">$s->{dest}</div>";
+      $o .= "<div class=\"dest\">$s->{dest}";
+      $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && $q->param('namedroutes') ne 'false';
+      $o .= "</div>";
       
       $o .= "<div class=\"dura\">$s->{dura}</div>";
       $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
