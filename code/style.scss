@@ -1,47 +1,8 @@
-body {
-  background: #f2f5f7;
-  font-size: 12px;
-  font-family: sans-serif;
-  min-width: 1200px; 
-}
 
-div {
-  box-sizing:border-box;
-  }
-
-div.config {
-  display: block;
-  width: 80%;
-  float: left;
-  background: #f7f5f2;
-  border: 1px solid #aaa;
-  margin: 2px; 
-  
-  div {
-    width:300px;
-    float:left;
-    }
-}
-
-  
-  
-#map {
-  position:fixed;
-  top:10px;
-  right:10px;
-  width:300px;
-  height:300px;
-  border:1px solid white;
-  z-index:10;
-  box-shadow:3px 3px 3px #aaa;
-/*   visibility:hidden; */
-  }  
-  
 div.entry {
   background:white;
   border:1px solid #aaa;
   width:400px;
-/*   min-height:50px; */
   height:50px;
   vertical-align:middle;
   position:relative;
@@ -55,30 +16,21 @@ div.entry {
     }
   
   div.compass {
-/*     float:left; */
     font-size:40px;
     width:40px;
     cursor:pointer;
     text-align:center;
     display: table-cell;
     vertical-align: middle;
-/*     position:relative; */
-/*     top:50%; */
-/*     transform: translateY(-50%); */
     }
     
   div.dest {
-/*     display:inline-block; */
     font-size:16px;
     width:250px;
     margin:auto 8px;
     height:100%;
-/*     float:left; */
     display: table-cell;
     vertical-align: middle;    
-/*     position:relative; */
-/*     top:50%; */
-/*     transform: translateY(-50%); */
     }
   
   div.dest span {
@@ -86,15 +38,9 @@ div.entry {
     }
   
   div.ref {
-/*     float:left; */
-/*     display:inline-block; */
-/*     position:relative; */
-/*     top:50%; */
     width:30px;
     display: table-cell;
     vertical-align: middle;
-/*     text-align:center; */
-/*     transform: translateY(-50%); */
     }
   
   div.symbol {

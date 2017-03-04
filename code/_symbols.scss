@@ -1,0 +1,52 @@
+  div.symbol div {
+    background-size: 25px;
+    background-repeat: no-repeat;
+    background-position:center center;
+    display: inline-block;
+    width: 25px; 
+    height: 25px;
+    margin:0;
+    padding:0;
+
+    }
+
+  div.industrial {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/4/4e/RWB_Industriegebiet.svg") ;
+    }
+  div.park_and_ride {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/9/94/Sinnbild_P-R.svg") ;
+    }  
+  div.parking {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/0/0f/UK_traffic_sign_801.svg") ;
+    }  
+  div.fuel {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/d/d3/Zeichen_361-50.svg") ;
+    }  
+  div.stadium {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/f/fb/Stadium_icon.svg") ;
+    } 
+  div.airport {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/5/51/Italian_traffic_signs_-_icona_aeroporto.svg") ;
+    }   
+  div.restaurant {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/4/4d/Zeichen_376.svg") ;
+    }   
+  div.toilets {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/d/d7/Zeichen_378.svg") ;
+    } 
+  div.motorway, div.highway {  
+    background-image: url('http://upload.wikimedia.org/wikipedia/commons/2/2a/Zeichen_330_-_Autobahn%2C_StVO_1992.svg');
+  } 
+  div.hospital {  
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/9/94/RWB_Krankenhaus.svg") ;
+    } 
+  div.train_station {  
+    background-color:white;
+    background-image:url("http://upload.wikimedia.org/wikipedia/commons/3/33/Fernbahn_Signet_HVV.svg") ;
+    } 
+  div.ferry {
+    background-image:url("https://upload.wikimedia.org/wikipedia/commons/9/92/Ferry.png") ;
+  }
+  div.centre {
+    background-image:url("https://upload.wikimedia.org/wikipedia/commons/2/2a/Italian_traffic_signs_-_icona_centro.svg") ;
+  } 

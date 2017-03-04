@@ -1,17 +1,10 @@
-#!/usr/bin/perl 
-use CGI::Carp qw(warningsToBrowser fatalsToBrowser); 
-
-print "Content-Type: text/html; charset=utf-8\r\n\r\n";
-
-
-print <<HDOC;
 <!DOCTYPE html>
 <html lang="en">
 <head>
  <title>OSM Destination Signs</title>
- <link rel="stylesheet" type="text/css" href="../destinationsign/style.css">
- <link rel="stylesheet" type="text/css" href="../destinationsign/website.css">
- <script src="../destinationsign/scripts.js" type="text/javascript"></script>
+ <link rel="stylesheet" type="text/css" href="../style.css">
+ <link rel="stylesheet" type="text/css" href="website.css">
+ <script src="../scripts.js" type="text/javascript"></script>
  <meta  charset="UTF-8"/>
  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
@@ -29,9 +22,6 @@ print <<HDOC;
 <div><form action="" onsubmit="getsign(0); return false;">
   <label title="Id of an intersection or guidepost node">Node Id: 
     <input type="text" name="nodeid"></label> 
-<!-- </form>-->
-<!--<br><label title="Select output styles">Styles <select name="style" multiple="multiple"><option>compass<option>image</select></label>-->
-<!--<form action="" return false;">-->
   <br><label title="Some Examples">Examples: 
     <select name="nodeid" onChange="getsign(1);">
       <option value="3731895314">3731895314 - bi-lingual
@@ -73,4 +63,3 @@ var polyline = L.polyline([[0,0]]).addTo(map);
 </script>
 
 </html>
-HDOC

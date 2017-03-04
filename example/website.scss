@@ -1,0 +1,37 @@
+body {
+  background: #f2f5f7;
+  font-size: 12px;
+  font-family: sans-serif;
+  min-width: 1200px; 
+}
+
+div {
+  box-sizing:border-box;
+  }
+
+div.config {
+  display: block;
+  width: 80%;
+  float: left;
+  background: #f7f5f2;
+  border: 1px solid #aaa;
+  margin: 2px; 
+  
+  div {
+    width:300px;
+    float:left;
+    }
+}
+  
+  
+#map {
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:300px;
+  height:300px;
+  border:1px solid white;
+  z-index:10;
+  box-shadow:3px 3px 3px #aaa;
+  }  
+  
