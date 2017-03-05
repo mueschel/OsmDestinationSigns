@@ -263,6 +263,7 @@ sub getTimeDistance {
 ## Read & Display information from relations
 #################################################  
 sub parseData {
+  my ($startnode) = @_;
   foreach my $w (keys %{$db->{relation}}) {
     next unless $db->{relation}{$w}{'tags'}{'type'} eq 'destination_sign';
     my $s;
@@ -293,6 +294,8 @@ sub parseData {
     $s->{intersection} //= searchIntersection($s);
     $s->{dir}            = getDirection($s);
     $s->{wayref}         = getRef($s);
+    
+    next if($startnode != $s->{sign} && $startnode != $s->{intersection});
     
     #If to or from node is part of from or to way resp., search for better to or from way
     if($s->{tonode} && $s->{to} == $s->{from}) {
@@ -357,7 +360,7 @@ sub parseData {
   
  
 readData($q->param('nodeid'));
-parseData();
+parseData($q->param('nodeid'));
 
 my $o;
 foreach my $e (sort keys %{$entries}) {
