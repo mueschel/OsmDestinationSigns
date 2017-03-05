@@ -9,7 +9,7 @@ function getData(command,dId,callback) {
   
   xmlhttp.onreadystatechange = function() {
     if(xmlhttp.readyState == 4) {
-      if(document.getElementById(destId)){
+      if(destId && document.getElementById(destId)){
         document.getElementById(destId).innerHTML  = xmlhttp.responseText;  
         }
       if(cb) {
@@ -28,12 +28,12 @@ function updatemap(d) {
   try {
     data = JSON.parse(d);
     document.getElementById('container').innerHTML = data.error + data.html;
-    if(map){
+    /*if(map){
       map.removeLayer(marker);
       marker = L.marker([data.lat, data.lon]).addTo(map);
       var group = new L.featureGroup([marker]);
       map.fitBounds(group.getBounds());
-      }
+     }*/
     } 
   catch (e) {
     document.getElementById('container').innerHTML = d;
@@ -42,9 +42,8 @@ function updatemap(d) {
 }
   
   
-function getsign(t) {
-  var url = 'generate.pl?';
-  var node = document.getElementsByName('nodeid')[t].value;
+function getsign(node) {
+  var url = '../code/generate.pl?';
   var namedroutes = document.getElementsByName('namedroutes')[0].checked;
   var fromarrow = document.getElementsByName('fromarrow')[0].checked;
   

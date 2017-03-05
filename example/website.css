@@ -2,23 +2,38 @@ body {
   background: #f2f5f7;
   font-size: 12px;
   font-family: sans-serif;
-  min-width: 1200px; }
+  min-width: 1200px;
+  z-index: 1; }
 
-div {
+* {
   box-sizing: border-box; }
+
+div#header {
+  position: absolute;
+  display: block;
+  width: 400px;
+  z-index: 1; }
+  div#header h1 {
+    display: inline-block; }
 
 div.config {
   display: block;
-  width: 80%;
+  width: 400px;
   float: left;
   background: #f7f5f2;
   border: 1px solid #aaa;
-  margin: 2px; }
+  margin: 2px;
+  padding: 2px;
+  z-index: 1; }
   div.config div {
     width: 300px;
     float: left; }
 
-#map {
+div#container {
+  padding-top: 20px;
+  z-index: 1; }
+
+.simplepage #map {
   position: fixed;
   top: 10px;
   right: 10px;
@@ -27,5 +42,18 @@ div.config {
   border: 1px solid white;
   z-index: 10;
   box-shadow: 3px 3px 3px #aaa; }
+
+.mappage #map {
+  position: fixed;
+  left: 450px;
+  top: 0px;
+  bottom: 0px;
+  right: 0px;
+  /*   padding-left:400px; */
+  /*   border-left:450px solid rgba(0,0,0,.5); */
+  background: #eee;
+  /*   width:70%; */
+  /*   height:80%; */
+  z-index: 0; }
 
 /*# sourceMappingURL=website.css.map */

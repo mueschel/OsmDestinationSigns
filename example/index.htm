@@ -1,39 +1,29 @@
-#!/usr/bin/perl 
-use CGI::Carp qw(warningsToBrowser fatalsToBrowser); 
-
-print "Content-Type: text/html; charset=utf-8\r\n\r\n";
-
-
-print <<HDOC;
 <!DOCTYPE html>
 <html lang="en">
 <head>
  <title>OSM Destination Signs</title>
- <link rel="stylesheet" type="text/css" href="../destinationsign/style.css">
- <link rel="stylesheet" type="text/css" href="../destinationsign/website.css">
- <script src="../destinationsign/scripts.js" type="text/javascript"></script>
+ <link rel="stylesheet" type="text/css" href="../code/style.css">
+ <link rel="stylesheet" type="text/css" href="../example/website.css">
+ <script src="../code/scripts.js" type="text/javascript"></script>
  <meta  charset="UTF-8"/>
  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+ <script src="../example/leaflet-layerjson.js"></script>
  <base target="_blank">
 </head>
-<body>
-<h1>Destination Signs</h1>
+<body class="mappage">
 <div id="header">
-<p>Please enter an Id of an intersection node or a guidepost.
+<h1>Destination Signs</h1>
+<p>Please enter an Id of an intersection node or a guidepost - or do it the simple way and select a marker from the map.
 <br>Click on the arrow to get to the corresponding OSM object.
-<br>Here is <a href="http://overpass-turbo.eu/s/n1p">a overpass query</a> with interesting nodes - blue dots have relations.
 <br>The code is available on <a href="https://github.com/mueschel/OsmDestinationSigns">Github</a>.
 <div class="config">
 <h3>Configuration</h3>
-<div><form action="" onsubmit="getsign(0); return false;">
+<div><form action="" onsubmit="getsign(document.getElementsByName('nodeid')[0].value); return false;">
   <label title="Id of an intersection or guidepost node">Node Id: 
     <input type="text" name="nodeid"></label> 
-<!-- </form>-->
-<!--<br><label title="Select output styles">Styles <select name="style" multiple="multiple"><option>compass<option>image</select></label>-->
-<!--<form action="" return false;">-->
   <br><label title="Some Examples">Examples: 
-    <select name="nodeid" onChange="getsign(1);">
+    <select name="nodeid" onChange="getsign(this.value);">
       <option value="3731895314">3731895314 - bi-lingual
       <option value="1938162531">1938162531
       <option value="4313151794">4313151794 - node as 'to'
@@ -50,27 +40,54 @@ print <<HDOC;
       <option value="1670509673">1670509673 - from way, no intersection
       <option value="3314100014">3314100014 - at a motorway
       <option value="3733676910">3733676910 - way part of a named route
-    </select></div>
+    </select>
     <div><input type="checkbox" name="namedroutes"> Add names of routes</input>
     <br><input type="checkbox" name="fromarrow" disabled> Show arrows as seen from 'from' way</input>
-    </div>
 </form>
 </div>
 </div>
 </div>
-<div id="map"></div>
-<hr style="margin-bottom:50px;margin-top:10px;clear:both;">
+<div style="margin-bottom:50px;margin-top:10px;clear:both;width:420px;height:1px;border-bottom:1px solid black;">
+<p><div id="map"></div>
 <div id="container">&nbsp;</div>
 
 
 </body>
 <script type="text/javascript">
-var map = L.map('map').setView([0, 0], 1);
+var map = L.map('map').setView([46.72539, 11.42286], 12);
+
 L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png',
 	{ attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
-var marker = L.marker(map.getCenter(), { draggable: false }).addTo(map);
-var polyline = L.polyline([[0,0]]).addTo(map);
+  
+L.layerJSON({
+  url: 'http://overpass-api.de/api/interpreter?data=[out:json];relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2});node(r:"sign");out;',
+  propertyItems: 'elements',
+  propertyTitle: 'tags.name',
+  propertyLoc: ['lat','lon'],
+  buildIcon: function(data, title) {
+    return new L.Icon({
+      iconUrl:'../code/marker-icon.png',
+      iconSize: new L.Point(25, 41),
+      iconAnchor: new L.Point(12, 41),
+      popupAnchor: new L.Point(0, -41)
+    })
+  },
+  buildPopup: function(data, marker) {
+    marker.on('click',function(d) {getsign(d.target.options.id);});
+    o = 'Waypost <a href="https://osm.org/node/'+data.id+'">'+data.id+'</a><br>';
+    for (var k in data.tags) {
+      if (data.tags.hasOwnProperty(k)) {
+        o += k+" = "+data.tags[k]+"<br>";
+        }
+      }
+    return o;  
+    }
+  })
+
+	.addTo(map);
+	
+
+
 </script>
 
 </html>
-HDOC

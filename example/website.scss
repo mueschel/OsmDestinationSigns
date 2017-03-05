@@ -3,28 +3,46 @@ body {
   font-size: 12px;
   font-family: sans-serif;
   min-width: 1200px; 
+    z-index:1;
 }
 
-div {
+* {
   box-sizing:border-box;
   }
 
+div#header {
+  position:absolute;
+  display: block;
+  width: 400px;
+  z-index:1;
+  
+  h1 {
+    display:inline-block;
+  }
+}  
+  
 div.config {
   display: block;
-  width: 80%;
+  width: 400px;
   float: left;
   background: #f7f5f2;
   border: 1px solid #aaa;
   margin: 2px; 
+  padding:2px;
+  z-index:1;
   
   div {
     width:300px;
     float:left;
     }
 }
+
+div#container {
+  padding-top:20px;
+  z-index:1;
+  }
   
-  
-#map {
+.simplepage #map {
   position:fixed;
   top:10px;
   right:10px;
@@ -35,3 +53,16 @@ div.config {
   box-shadow:3px 3px 3px #aaa;
   }  
   
+.mappage #map {
+  position:fixed;
+  left:450px;
+  top:0px;
+  bottom:0px;
+  right:0px;
+/*   padding-left:400px; */
+/*   border-left:450px solid rgba(0,0,0,.5); */
+  background:#eee;
+/*   width:70%; */
+/*   height:80%; */
+  z-index:0;
+  }

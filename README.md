@@ -5,19 +5,19 @@ This is a tool to show information stored in OSM in the form of destination_sign
 
 Supported tagging features:
 ---
-### Relation type=destination_sign
 
-* destination tags, including destination:lang:XX
+* destination tags, including destination:lang:XX and destination:symbol
 * distance and time
 * colour:text, colour:back, colour:arrow
-* direction of route
+* direction of route from geometry of ways and nodes
+* additional sources from guidepost node: image, mapillary, website, operator
+* ref numbers of ways are taken from destination:ref on relations or ref on ways or ref on hiking routes the way belongs to
 
-### Node - guidepost
-* additional sources: image, mapillary, website
-* operator information
+Usage
+---
+All code is included in the code directory - a Perl script generating the signs, a JavaScript file for control on the users' side and a style file.
 
-### Ways
-* ref number, also from routes the way belongs to
+The example directory contains a Leaflet map page with markers for interesting points. It needs an additional library to load data from Overpass (leaflet-layerjson.js) which can be found here: https://github.com/stefanocudini/leaflet-layerJSON
 
 License
 ---
