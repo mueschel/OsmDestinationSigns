@@ -28,12 +28,9 @@ function updatemap(d) {
   try {
     data = JSON.parse(d);
     document.getElementById('container').innerHTML = data.error + data.html;
-    /*if(map){
-      map.removeLayer(marker);
-      marker = L.marker([data.lat, data.lon]).addTo(map);
-      var group = new L.featureGroup([marker]);
-      map.fitBounds(group.getBounds());
-     }*/
+    if(map){
+      map.panTo([data.lat, data.lon]);
+     }
     } 
   catch (e) {
     document.getElementById('container').innerHTML = d;
@@ -44,12 +41,10 @@ function updatemap(d) {
   
 function getsign(node) {
   var url = '../code/generate.pl?';
-  var namedroutes = document.getElementsByName('namedroutes')[0].checked;
-  var fromarrow = document.getElementsByName('fromarrow')[0].checked;
+  var namedroutes = document.getElementsByName('namedroutes')[0].checked?'&namedroutes':'';
+  var fromarrow = document.getElementsByName('fromarrow')[0].checked?'&fromarrow':'';
   
-  url += 'nodeid='+node;
-  url += '&namedroutes='+namedroutes
-  url += '&fromarrow='+fromarrow
+  url += 'nodeid='+node+namedroutes+fromarrow;
   getData(url,'',updatemap);
   }
 

@@ -45,6 +45,7 @@ sub readData {
   node($input)->.start;
   rel(bn.start)[type=destination_sign]->.rels;
   node(r.rels)->.nodes;
+  way(r.rels)->.ways;
   way(bn.nodes)[highway]->.wa;
   way(bn.start)[highway]->.wb;
 );
@@ -270,9 +271,11 @@ sub parseData {
     $s->{id} = $w;
     foreach my $m (@{$db->{relation}{$w}{'members'}}) {
       if ($m->{'role'} eq 'sign' && $m->{'type'} eq 'node') {
+        next if $s->{sign} == $startnode;
         $s->{sign} = $m->{'ref'};
         }
       if ($m->{'role'} eq 'intersection' && $m->{'type'} eq 'node') {
+        next if $s->{intersection} == $startnode;
         $s->{intersection} = $m->{'ref'};
         }
       if ($m->{'role'} eq 'from' && $m->{'type'} eq 'way') {
@@ -332,7 +335,7 @@ sub parseData {
         
       $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
       $o .= "<div class=\"dest\">$s->{dest}";
-      $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && $q->param('namedroutes') ne 'false';
+      $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
       $o .= "</div>";
       
       $o .= "<div class=\"dura\">$s->{dura}</div>";
@@ -372,4 +375,4 @@ $out->{lat} = $db->{node}{$q->param('nodeid')}{lat};
 $out->{lon} = $db->{node}{$q->param('nodeid')}{lon};
 
 print  encode_json($out);
-# #     $out->{error} .= $s->{intersection}.' ' ;
+

@@ -3,10 +3,12 @@
 <head>
  <title>OSM Destination Signs</title>
  <link rel="stylesheet" type="text/css" href="../code/style.css">
- <link rel="stylesheet" type="text/css" href="../example/website.css">
  <script src="../code/scripts.js" type="text/javascript"></script>
  <meta  charset="UTF-8"/>
+
+ 
  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+ <link rel="stylesheet" type="text/css" href="../example/website.css">
  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
  <script src="../example/leaflet-layerjson.js"></script>
  <base target="_blank">
@@ -14,7 +16,8 @@
 <body class="mappage">
 <div id="header">
 <h1>Destination Signs</h1>
-<p>Please enter an Id of an intersection node or a guidepost - or do it the simple way and select a marker from the map.
+<p><strong>This tool shows the content of relations with "type=destination_sign".</strong>
+<br>Please enter an Id of an intersection node or a guidepost - or do it the simple way and select a marker from the map.
 <br>Click on the arrow to get to the corresponding OSM object.
 <br>The code is available on <a href="https://github.com/mueschel/OsmDestinationSigns">Github</a>.
 <div class="config">
@@ -22,7 +25,7 @@
 <div><form action="" onsubmit="getsign(document.getElementsByName('nodeid')[0].value); return false;">
   <label title="Id of an intersection or guidepost node">Node Id: 
     <input type="text" name="nodeid"></label> 
-  <br><label title="Some Examples">Examples: 
+  <br><label title="Some Examples">Some (interesting) examples: 
     <select name="nodeid" onChange="getsign(this.value);">
       <option value="3731895314">3731895314 - bi-lingual
       <option value="1938162531">1938162531
@@ -33,13 +36,15 @@
       <option value="3033139388">3033139388 - bicycle with colour but missing intersection
       <option value="2400684815">2400684815 - list of destinations and times
       <option value="3669231450">3669231450 - coloured arrows
-      <option value="3740138783">3740138783 - error - entries from several signs
+      <option value="3740138783">3740138783
       <option value="3908107497">3908107497 - an awful lot of entries
       <option value="3700303286">3700303286 - with image and operator
       <option value="3906804369">3906804369 - with Mapillary
       <option value="1670509673">1670509673 - from way, no intersection
-      <option value="3314100014">3314100014 - at a motorway
+      <option value="3314100013">3314100013 - at a motorway
       <option value="3733676910">3733676910 - way part of a named route
+      <option value="521744">521744 - destination:lanes would be better
+      <option value="3904774546">3904774546 - long relation names
     </select>
     <div><input type="checkbox" name="namedroutes"> Add names of routes</input>
     <br><input type="checkbox" name="fromarrow" disabled> Show arrows as seen from 'from' way</input>
@@ -85,7 +90,7 @@ L.layerJSON({
   })
 
 	.addTo(map);
-	
+	var marker;
 
 
 </script>
