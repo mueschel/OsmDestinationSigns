@@ -94,8 +94,36 @@ sub calcDirection {
 sub getDirection {
   my ($s) = @_;
   my $o = -1000;
+  my $p = -1000;
+  #from from to to
+  if(defined $q->param('fromarrow') && $s->{to} && $s->{from}) {
+    my @ns = @{$db->{way}{$s->{to}}{nodes}};
+    if ($ns[0] == $s->{intersection}) {
+      $o = calcDirection($s->{intersection},$ns[min(scalar @ns-1, 3)]);
+      }
+    elsif ($ns[-1] == $s->{intersection}) {
+      $o = calcDirection($s->{intersection},$ns[-min(scalar @ns,4)]);
+      }
+#     $out->{error} .= $o." ";  
+    @ns = @{$db->{way}{$s->{from}}{nodes}};  
+    if ($ns[0] == $s->{intersection}) {
+      $p = calcDirection($ns[min(scalar @ns-1, 3)],$s->{intersection});
+      }
+    elsif ($ns[-1] == $s->{intersection}) {
+      $p = calcDirection($ns[-min(scalar @ns,4)],$s->{intersection});
+      }
+#     $out->{error} .= $p." ";  
+    if($o != -1000 && $p != -1000) {
+      $o = -90 + $o - $p;  
+      }
+    else {
+      $o = -1000;
+      }
+#     $out->{error} .= $o."<br>";  
+    } 
+  
   #To-way and intersection node
-  if($s->{to} && $s->{intersection} && !$s->{tonode}) {
+  elsif($s->{to} && $s->{intersection} && !$s->{tonode}) {
     if($db->{way}{$s->{to}}){
       my @ns = @{$db->{way}{$s->{to}}{nodes}};
       if ($ns[0] == $s->{intersection}) {
@@ -294,19 +322,22 @@ sub parseData {
         }
       }
     
-    $s->{intersection} //= searchIntersection($s);
-    $s->{dir}            = getDirection($s);
-    $s->{wayref}         = getRef($s);
-    
     next if($startnode != $s->{sign} && $startnode != $s->{intersection});
     
     #If to or from node is part of from or to way resp., search for better to or from way
     if($s->{tonode} && $s->{to} == $s->{from}) {
+#       $out->{error} .=$s->{to}." ";
       $s->{to} = findWayfromNode($s->{tonode},1);
+#       $out->{error} .=$s->{to}."<br>";
       }
     if($s->{fromnode} && $s->{to} == $s->{from}) {
       $s->{from} = findWayfromNode($s->{to},1);
-      }      
+      }   
+      
+    $s->{intersection} //= searchIntersection($s);
+    $s->{dir}            = getDirection($s);
+    $s->{wayref}         = getRef($s);
+      
     foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
       $s->{dest} = DestinationString($w,$i);
       $s->{wayname} = getNamedWay($s);
@@ -341,7 +372,7 @@ sub parseData {
       $o .= "<div class=\"dura\">$s->{dura}</div>";
       $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
       $o .= "</div>";
-      $entries->{$s->{dir}.$s->{dest}.$i} = $o;
+      $entries->{$s->{dir}.$s->{dest}.$s->{from}.$i} = $o;
       }
 
     my $o = '';
