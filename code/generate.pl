@@ -99,22 +99,23 @@ sub getDirection {
   if(defined $q->param('fromarrow') && $s->{to} && $s->{from}) {
     my @ns = @{$db->{way}{$s->{to}}{nodes}};
     if ($ns[0] == $s->{intersection}) {
-      $o = calcDirection($s->{intersection},$ns[min(scalar @ns-1, 3)]);
+      $o = calcDirection($s->{intersection},$ns[min(scalar @ns-1, 2)]);
       }
     elsif ($ns[-1] == $s->{intersection}) {
-      $o = calcDirection($s->{intersection},$ns[-min(scalar @ns,4)]);
+      $o = calcDirection($s->{intersection},$ns[-min(scalar @ns,3)]);
       }
 #     $out->{error} .= $o." ";  
     @ns = @{$db->{way}{$s->{from}}{nodes}};  
     if ($ns[0] == $s->{intersection}) {
-      $p = calcDirection($ns[min(scalar @ns-1, 3)],$s->{intersection});
+      $p = calcDirection($ns[min(scalar @ns-1, 2)],$s->{intersection});
       }
     elsif ($ns[-1] == $s->{intersection}) {
-      $p = calcDirection($ns[-min(scalar @ns,4)],$s->{intersection});
+      $p = calcDirection($ns[-min(scalar @ns,3)],$s->{intersection});
       }
 #     $out->{error} .= $p." ";  
     if($o != -1000 && $p != -1000) {
       $o = -90 + $o - $p;  
+      $s->{fromarrow} = 1;
       }
     else {
       $o = -1000;
@@ -127,10 +128,10 @@ sub getDirection {
     if($db->{way}{$s->{to}}){
       my @ns = @{$db->{way}{$s->{to}}{nodes}};
       if ($ns[0] == $s->{intersection}) {
-        $o = calcDirection($ns[0],$ns[min(scalar @ns-1, 3)]);
+        $o = calcDirection($ns[0],$ns[min(scalar @ns-1, 2)]);
         }
       elsif ($ns[-1] == $s->{intersection}) {
-        $o = calcDirection($ns[-1],$ns[-min(scalar @ns,4)]);
+        $o = calcDirection($ns[-1],$ns[-min(scalar @ns,3)]);
         }
       }
     }
@@ -190,14 +191,16 @@ sub findWayfromNode {
   return 0;  
   }  
 
-#Find intersection by common point in to and from ways  
+#Find intersection by   
 sub searchIntersection {
   my ($s) = @_;
   return unless $s->{to};
   return unless $s->{from};
-  if(isWayNode($s->{sign},$s->{to}) >= 0 || isWayEndNode($s->{sign},$s->{from}) {
+  #sign used as intersection?
+  if(isWayNode($s->{sign},$s->{to}) >= 0 || isWayEndNode($s->{sign},$s->{from})) {
     return $s->{sign};
     }
+  #common point in to and from ways  
   if($db->{way}{$s->{to}}{'nodes'}[0] == $db->{way}{$s->{from}}{'nodes'}[0] || 
      $db->{way}{$s->{to}}{'nodes'}[0] == $db->{way}{$s->{from}}{'nodes'}[-1]){
     return $db->{way}{$s->{to}}{'nodes'}[0];
@@ -205,6 +208,13 @@ sub searchIntersection {
   if($db->{way}{$s->{to}}{'nodes'}[-1] == $db->{way}{$s->{from}}{'nodes'}[0] || 
      $db->{way}{$s->{to}}{'nodes'}[-1] == $db->{way}{$s->{from}}{'nodes'}[-1]){
     return $db->{way}{$s->{to}}{'nodes'}[-1];
+    }
+  #end of to way somewhere in from way  
+  if( isWayNode($db->{way}{$s->{to}}{'nodes'}[0],$s->{from}) >= 0 ) {
+      return $db->{way}{$s->{to}}{'nodes'}[0];
+    }
+  if( isWayNode($db->{way}{$s->{to}}{'nodes'}[-1],$s->{from}) >= 0 ) {
+      return $db->{way}{$s->{to}}{'nodes'}[-1];
     }
   }
 
@@ -214,7 +224,7 @@ sub getNamedWay {
   my $o;
   foreach my $r (keys %{$db->{relation}}) { 
     if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
-        $db->{relation}{$r}{'tags'}{'route'} eq 'hiking') {
+        grep(/^$db->{relation}{$r}{'tags'}{'route'}$/, qw(foot mtb hiking bicycle horse))) {
       if (isRelationMember('way',$s->{to},$r)) { 
         if ($db->{relation}{$r}{'tags'}{'name'}) {
           $o .= '<br>' if $o;
@@ -336,11 +346,9 @@ sub parseData {
     
     next if($startnode != $s->{sign} && $startnode != $s->{intersection});
     
-    #If to or from node is part of from or to way resp., search for better to or from way
+    #If 'from way' is same as 'to way', search for a better one, depending on whether 'to node' or 'from node' was given
     if($s->{tonode} && $s->{to} == $s->{from}) {
-#       $out->{error} .=$s->{to}." ";
       $s->{to} = findWayfromNode($s->{tonode},1);
-#       $out->{error} .=$s->{to}."<br>";
       }
     if($s->{fromnode} && $s->{to} == $s->{from}) {
       $s->{from} = findWayfromNode($s->{to},1);
@@ -368,7 +376,12 @@ sub parseData {
       $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:arrow'}.";" if $db->{relation}{$w}{'tags'}{'colour:arrow'}; 
       $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
       if($s->{dir} != -1000) {  
-        $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
+        if(defined $q->param('fromarrow') && $s->{fromarrow}) {
+          $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e8;</div>";
+          }
+        else {  
+          $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
+          }
         }
       else {
         $o .= "<div>?</div>";
