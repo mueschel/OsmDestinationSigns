@@ -169,6 +169,15 @@ sub isWayNode {
   return -1;  
   }  
 
+  #Helper: is a node an end of a given way?
+sub isWayEndNode {
+  my ($id,$parid) = @_;
+  if ( $db->{way}{$parid}{'nodes'}[0] == $id || $db->{way}{$parid}{'nodes'}[-1] == $id) {
+    return 1;
+    }
+  return 0;  
+  }  
+  
 #Helper: find a way the given node is on
 sub findWayfromNode {
   my ($n,$match) =  @_;
@@ -186,6 +195,9 @@ sub searchIntersection {
   my ($s) = @_;
   return unless $s->{to};
   return unless $s->{from};
+  if(isWayNode($s->{sign},$s->{to}) >= 0 || isWayEndNode($s->{sign},$s->{from}) {
+    return $s->{sign};
+    }
   if($db->{way}{$s->{to}}{'nodes'}[0] == $db->{way}{$s->{from}}{'nodes'}[0] || 
      $db->{way}{$s->{to}}{'nodes'}[0] == $db->{way}{$s->{from}}{'nodes'}[-1]){
     return $db->{way}{$s->{to}}{'nodes'}[0];
