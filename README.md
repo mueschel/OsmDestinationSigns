@@ -17,7 +17,7 @@ Usage
 ---
 All code is included in the code directory - a Perl script generating the signs, a JavaScript file for control on the users' side and a style file.
 
-The example directory contains a Leaflet map page with markers for interesting points. It needs an additional library to load data from Overpass (leaflet-layerjson.js) which can be found here: https://github.com/stefanocudini/leaflet-layerJSON
+The example directory contains a Leaflet map page with markers for interesting points. It needs an additional library to load data from Overpass (leaflet-layerjson.js) which can be found here: https://github.com/stefanocudini/leaflet-layerJSON and leaflet-permalink.js which can be found here: https://github.com/shramov/leaflet-plugins/ 
 
 License
 ---

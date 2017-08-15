@@ -6,11 +6,17 @@
  <script src="../code/scripts.js" type="text/javascript"></script>
  <meta  charset="UTF-8"/>
 
- 
- <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
+  integrity="sha512-wcw6ts8Anuw10Mzh9Ytw4pylW8+NAD4ch3lqm9lzAsTxg0GFeJgoAtxuCLREZSC5lUXdVyo/7yfsqFjQ4S+aKw=="
+  crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"
+  integrity="sha512-mNqn2Wg7tSToJhvHcqfzLMU6J4mkOImSPTxVZAdo+lcPlk+GhZmYgACEe0x35K7YzW1zJ7XyJV/TT1MrdXvMcA=="
+  crossorigin=""></script> 
+<!--  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" /> -->
  <link rel="stylesheet" type="text/css" href="../example/website.css">
- <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+<!--  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script> -->
  <script src="../example/leaflet-layerjson.js"></script>
+ <script src="../example/leaflet-permalink.js"></script>
  <base target="_blank">
 </head>
 <body class="mappage">
@@ -46,9 +52,15 @@
       <option value="521744">521744 - destination:lanes would be better
       <option value="3904774546">3904774546 - long relation names
       <option value="521648">521648 - need to find right to way
+      <option value="3718993777">3718993777 - 2 'to' mapping error
+      <option value="4015458129">4015458129 - in a roundabout
+      <option value="33606838">33606838 - ambiguous
+      <option value="275664964">275664964 - with various from's
+      <option value="4554236964">4554236964 - with many from; time and distance
     </select></label>
     <div><input type="checkbox" name="namedroutes" checked="checked"> Add names of routes</input>
-    <br><input type="checkbox" name="fromarrow"> Show hollow arrows as seen from 'from' way</input>
+    <br><input type="checkbox" name="fromarrow" checked="checked"> Show hollow arrows as seen from 'from' way</input>
+    <br><a id="permanode" href="">Link to this node</a>
 </form>
 </div>
 </div>
@@ -63,13 +75,15 @@
 var map = L.map('map').setView([46.72539, 11.42286], 12);
 
 L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png',
-	{ attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
+  { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
   
 L.layerJSON({
   url: 'http://overpass-api.de/api/interpreter?data=[out:json];relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2});node(r:"sign");out;',
   propertyItems: 'elements',
   propertyTitle: 'tags.name',
   propertyLoc: ['lat','lon'],
+  minShift: 100,
+  updateOutBounds: true,
   buildIcon: function(data, title) {
     return new L.Icon({
       iconUrl:'../code/marker-icon.png',
@@ -90,8 +104,18 @@ L.layerJSON({
     }
   })
 
-	.addTo(map);
-	var marker;
+  .addTo(map);
+  var marker;
+
+map.addControl(new L.Control.Permalink({text: 'Permalink'}));
+
+var hash = (location.hash ||'').replace(/^#/,'').split('&');
+for(i=0; i<hash.length; i++ ){
+  var t = hash[i].split('=');
+  if (t[0]=='node') {
+    getsign(t[1]);
+    }
+  }
 
 
 </script>
