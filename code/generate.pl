@@ -60,13 +60,30 @@ QUERY
        $json = $request->content();
     }
   else {
-    die "Can not parse input";
+    $out->{error} .= "<h3>Can not parse input</h3>"; 
+    return 0;
     }
-  $data = decode_json($json) or die "No valid JSON from Overpass";
-  foreach my $w (@{$data->{elements}}) {
-    next if $db->{$w->{'type'}}{$w->{'id'}};
-    $db->{$w->{'type'}}{$w->{'id'}} = $w;
+    
+  eval {
+    $data = decode_json($json);
+    1;
+    } 
+  or do {
+    $out->{error} .=  "<h3>No valid data from Overpass</h3>". $json;
+    return 0;
+    };
+  
+  if (scalar @{$data->{elements}}) {
+    foreach my $w (@{$data->{elements}}) {
+      next if $db->{$w->{'type'}}{$w->{'id'}};
+      $db->{$w->{'type'}}{$w->{'id'}} = $w;
+      }
+    }  
+  else {
+    $out->{error} .=  "<h3>No valid data from Overpass</h3>". "Object not found";
+    return 0;
     }
+  return 1;  
   }
 
 #################################################
@@ -116,6 +133,8 @@ sub getDirection {
     if($o != -1000 && $p != -1000) {
       $o = -90 + $o - $p;  
       $s->{fromarrow} = 1;
+      $s->{fromdir} = $p;
+      return int $o; 
       }
     else {
       $o = -1000;
@@ -124,7 +143,7 @@ sub getDirection {
     } 
   
   #To-way and intersection node
-  elsif($s->{to} && $s->{intersection} && !$s->{tonode}) {
+  if($s->{to} && $s->{intersection} && !$s->{tonode}) {
     if($db->{way}{$s->{to}}){
       my @ns = @{$db->{way}{$s->{to}}{nodes}};
       if ($ns[0] == $s->{intersection}) {
@@ -182,13 +201,13 @@ sub isWayEndNode {
 #Helper: find a way the given node is on
 sub findWayfromNode {
   my ($n,$match) =  @_;
-  $match //= 0;
+  my @o;
   foreach my $w  (sort keys %{$db->{way}}) {
     if(isWayNode($n,$w)>=0) {
-      return $w if 0==$match--;
+      push(@o,$w) if !defined $match || 0==$match--;
       }
     }
-  return 0;  
+  return @o;  
   }  
 
 #Find intersection by   
@@ -256,14 +275,17 @@ sub DestinationString {
 #Search through sources of refs  
 sub getRef {
   my $s = shift @_;
+  my $p = shift @_;
   my $o ='';
+  my @out;
   #ref from destination:ref
   if ($db->{relation}{$s->{id}}{'tags'}{'destination:ref'}) {
-    $o = $db->{relation}{$s->{id}}{'tags'}{'destination:ref'};
+    my @tmp = split(';',$db->{relation}{$s->{id}}{'tags'}{'destination:ref'});
+    push(@out,@tmp) unless defined $p;
+    push(@out,$tmp[$p]) if defined $p;
     }
   else {
     #ref from ref on to-way  
-    my @out;
     if ($db->{way}{$s->{to}}{'tags'}{'ref'}) {
       push(@out,$db->{way}{$s->{to}}{'tags'}{'ref'});
       }
@@ -278,8 +300,9 @@ sub getRef {
           } 
         }
       }
-    $o = join (';',uniq(@out));  
-    } 
+    
+    }
+  $o = join (';',uniq(@out));  
   $o =~ s/;/<br>/g;   
   return $o;
   }
@@ -309,6 +332,27 @@ sub getTimeDistance {
     }
   return $o;  
   }
+
+sub getBestTo {
+  my ($s) = @_;
+  my @tos = @{$s->{tos}};
+  my $o = $tos[0];
+  my $best = 0;
+#   $out->{error} .= join('-',@tos).'<br>';
+  foreach my $t (@tos) {
+    my $val = 0;
+    next if $t == $s->{from};
+    $val++ if (isWayEndNode($s->{intersection},$t));
+    $val++ if (isWayEndNode($s->{sign},$t));
+    $val++ if (isWayNode($s->{tonode},$t) != -1);
+    
+    if ($val > $best) {
+      $o = $t;
+      $best = $val;
+      }
+    }
+  return $o;
+  }
   
 #################################################
 ## Read & Display information from relations
@@ -324,80 +368,92 @@ sub parseData {
         next if $s->{sign} == $startnode;
         $s->{sign} = $m->{'ref'};
         }
-      if ($m->{'role'} eq 'intersection' && $m->{'type'} eq 'node') {
+      if (($m->{'role'} eq 'intersection' || $m->{'role'} eq 'via') && $m->{'type'} eq 'node') {
         next if $s->{intersection} == $startnode;
         $s->{intersection} = $m->{'ref'};
         }
       if ($m->{'role'} eq 'from' && $m->{'type'} eq 'way') {
-        $s->{from} = $m->{'ref'};
+        push(@{$s->{froms}},$m->{'ref'});
         }
       if ($m->{'role'} eq 'from' && $m->{'type'} eq 'node') {
         $s->{fromnode} = $m->{'ref'};
-        $s->{from} = findWayfromNode($m->{'ref'});
+        push(@{$s->{froms}},findWayfromNode($m->{'ref'}));
         }
       if ($m->{'role'} eq 'to' && $m->{'type'} eq 'way') {
-        $s->{to} = $m->{'ref'};
+        push(@{$s->{tos}},$m->{'ref'});
         }
       if ($m->{'role'} eq 'to' && $m->{'type'} eq 'node') {
         $s->{tonode} = $m->{'ref'};
-        $s->{to} = findWayfromNode($m->{'ref'});
+        push(@{$s->{tos}},findWayfromNode($m->{'ref'}));
         }
       }
     
     next if($startnode != $s->{sign} && $startnode != $s->{intersection});
     
-    #If 'from way' is same as 'to way', search for a better one, depending on whether 'to node' or 'from node' was given
-    if($s->{tonode} && $s->{to} == $s->{from}) {
-      $s->{to} = findWayfromNode($s->{tonode},1);
-      }
-    if($s->{fromnode} && $s->{to} == $s->{from}) {
-      $s->{from} = findWayfromNode($s->{to},1);
-      }   
-      
-    $s->{intersection} //= searchIntersection($s);
-    $s->{dir}            = getDirection($s);
-    $s->{wayref}         = getRef($s);
-      
-    foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
-      $s->{dest} = DestinationString($w,$i);
-      $s->{wayname} = getNamedWay($s);
-  
-      $s->{dura} = getTimeDistance($w,$i);
-      $s->{symbol} = getSymbol($w,$i);
-
-      my $o;
-      $o = "<div class=\"entry\" style=\"";
-      $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:text'}.";" if $db->{relation}{$w}{'tags'}{'colour:text'}; 
-      $o .= "background:".$db->{relation}{$w}{'tags'}{'colour:back'}.";" if $db->{relation}{$w}{'tags'}{'colour:back'}; 
-      $o .= "\">";
-      
+    @{$s->{tos}}   = uniq @{$s->{tos}};
+    @{$s->{froms}} = uniq @{$s->{froms}};
     
-      $o .= "<div class=\"compass\" style=\"";
-      $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:arrow'}.";" if $db->{relation}{$w}{'tags'}{'colour:arrow'}; 
-      $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
-      if($s->{dir} != -1000) {  
-        if(defined $q->param('fromarrow') && $s->{fromarrow}) {
-          $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e8;</div>";
-          }
-        else {  
-          $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
-          }
-        }
-      else {
-        $o .= "<div>?</div>";
-        }
-      $o .= '</div>';  
-        
-        
-      $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
-      $o .= "<div class=\"dest\">$s->{dest}";
-      $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
-      $o .= "</div>";
+    push(@{$s->{froms}},'') if (scalar @{$s->{froms}} == 0);
+    
+    foreach my $f (@{$s->{froms}}) {
+      $s->{fromarrow} = 0;  
+      $s->{from} = $f;
+      $s->{to}   = getBestTo($s);
+      $s->{intersection} //= searchIntersection($s);
+      $s->{dir}            = getDirection($s);
+
+#       $out->{error} .= $s->{from}.'-'.$s->{to}.'-'.$s->{intersection}.'<br>';
+
       
-      $o .= "<div class=\"dura\">$s->{dura}</div>";
-      $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
-      $o .= "</div>";
-      $entries->{$s->{dir}.$s->{dest}.$s->{from}.$i} = $o;
+      foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
+        $s->{dest} = DestinationString($w,$i);
+        $s->{wayname} = getNamedWay($s);
+        $s->{wayref}  = getRef($s, $i);
+    
+        $s->{dura} = getTimeDistance($w,$i);
+        $s->{symbol} = getSymbol($w,$i);
+
+        my $o;
+        $o = "<div class=\"entry\" style=\"";
+        $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:text'}.";" if $db->{relation}{$w}{'tags'}{'colour:text'}; 
+        $o .= "background:".$db->{relation}{$w}{'tags'}{'colour:back'}.";"; 
+        $o .= "\">";
+        
+      
+        $o .= "<div class=\"compass\" style=\"";
+        if ($db->{relation}{$w}{'tags'}{'colour:arrow'} && $db->{relation}{$w}{'tags'}{'colour:back'} ne $db->{relation}{$w}{'tags'}{'colour:arrow'}) {
+          $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:arrow'}.";" ; 
+          }
+        $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
+        if($s->{dir} != -1000) {  
+          if(defined $q->param('fromarrow') && $s->{fromarrow}) {
+            $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e8;</div>";
+            }
+          else {  
+            $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
+            }
+          }
+        else {
+          $o .= "<div>?</div>";
+          }
+        $o .= '</div>';  
+          
+          
+        $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
+        $o .= "<div class=\"dest\">$s->{dest}";
+        $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
+        $o .= "</div>";
+        
+        $o .= "<div class=\"dura\">$s->{dura}</div>";
+        $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
+        $o .= "</div>";
+        if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
+          $entries->{$s->{fromdir}}{$s->{dir}.$s->{dest}.$i.$w} = $o;
+          }
+        else {
+          $entries->{'all'}{$s->{dir}.$s->{dest}.$i.$w} = $o;
+          }
+        }
       }
 
     my $o = '';
@@ -410,7 +466,7 @@ sub parseData {
       if($o) {
         $o = "<div class=\"details\">".$o."</div>";
         }
-      $entries->{'Z'.$s->{sign}} = $o;
+      $entries->{'all'}{'Z'.$s->{sign}} = $o;
       }  
     }
   }
@@ -418,12 +474,19 @@ sub parseData {
   
   
  
-readData($q->param('nodeid'));
-parseData($q->param('nodeid'));
+readData($q->param('nodeid')) && parseData($q->param('nodeid'));
 
 my $o;
 foreach my $e (sort keys %{$entries}) {
-  $o .= $entries->{$e}."\n";
+  if ($e ne 'all') {
+    $o .= "<div>Travel Direction <div style=\"display:inline-block;transform: rotate(".(int $e)."deg);\">&#10137;</div></div>";
+    }
+  else {
+    $o .= "<div>&nbsp;</div>";
+    }
+  foreach my $f (sort keys %{$entries->{$e}}) {
+    $o .= $entries->{$e}{$f}."\n";
+    }
   }
 
 $out->{html} = $o;

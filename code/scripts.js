@@ -27,13 +27,22 @@ function updatemap(d) {
   var data;
   try {
     data = JSON.parse(d);
-    document.getElementById('container').innerHTML = data.error + data.html;
-    if(map){
+    
+    document.getElementById('container').innerHTML = "";
+    if (data.error) {
+      document.getElementById('container').innerHTML = data.error;
+      }
+    if(data.html) {  
+      document.getElementById('container').innerHTML += data.html;
+      }
+    
+    //move map if out of bounds
+    if(map && data.lat && data.lon && !map.getBounds().contains([data.lat, data.lon])){
       map.panTo([data.lat, data.lon]);
      }
     } 
   catch (e) {
-    document.getElementById('container').innerHTML = d;
+    document.getElementById('container').innerHTML = "<h3>Error / Debugging</h3>"+ d;
     }
   
 }
@@ -46,6 +55,9 @@ function getsign(node) {
   
   url += 'nodeid='+node+namedroutes+fromarrow;
   getData(url,'',updatemap);
+  document.getElementById("permanode").href = '#node='+node;
+  document.getElementsByName("nodeid")[0].value = node;
+  document.getElementById('container').innerHTML = "<h3>Loading...</h3>";
   }
 
 function showObj(t,i) {
