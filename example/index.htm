@@ -78,7 +78,7 @@ L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png',
   { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
   
 L.layerJSON({
-  url: 'http://overpass-api.de/api/interpreter?data=[out:json];relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2});node(r:"sign");out;',
+  url: 'http://overpass-api.de/api/interpreter?data=[out:json];relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.a;node(r.a:"sign")->.b;.b out;rel(bn.b)["type"="destination_sign"]->.c;(.a - .c)->.d;node(r.d:"intersection")->.e;.e out;',
   propertyItems: 'elements',
   propertyTitle: 'tags.name',
   propertyLoc: ['lat','lon'],
