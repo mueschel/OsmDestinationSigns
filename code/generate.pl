@@ -23,6 +23,9 @@ my $entries;
 my $out;
 $out->{error} = '';
 
+my $format = $q->param('format') || 'html';
+
+
 #################################################
 ## Read and organize data
 ## reads data from JSON input
@@ -110,34 +113,31 @@ sub calcDirection {
 #################################################  
 sub getDirection {
   my ($s) = @_;
-  my $o = -1000;
-  my $p = -1000;
+  $s->{fromdir} = undef;
+  $s->{todir}   = undef;
+  $s->{reladir} = undef;
   #from from to to
   if(defined $q->param('fromarrow') && $s->{to} && $s->{from}) {
     my @ns = @{$db->{way}{$s->{to}}{nodes}};
     if ($ns[0] == $s->{intersection}) {
-      $o = calcDirection($s->{intersection},$ns[min(scalar @ns-1, 2)]);
+      $s->{todir} = calcDirection($s->{intersection},$ns[min(scalar @ns-1, 2)]);;
       }
     elsif ($ns[-1] == $s->{intersection}) {
-      $o = calcDirection($s->{intersection},$ns[-min(scalar @ns,3)]);
+      $s->{todir} = calcDirection($s->{intersection},$ns[-min(scalar @ns,3)]);
       }
 #     $out->{error} .= $o." ";  
     @ns = @{$db->{way}{$s->{from}}{nodes}};  
     if ($ns[0] == $s->{intersection}) {
-      $p = calcDirection($ns[min(scalar @ns-1, 2)],$s->{intersection});
+      $s->{fromdir} = calcDirection($ns[min(scalar @ns-1, 2)],$s->{intersection});
       }
     elsif ($ns[-1] == $s->{intersection}) {
-      $p = calcDirection($ns[-min(scalar @ns,3)],$s->{intersection});
+      $s->{fromdir} = calcDirection($ns[-min(scalar @ns,3)],$s->{intersection});
       }
 #     $out->{error} .= $p." ";  
-    if($o != -1000 && $p != -1000) {
-      $o = -90 + $o - $p;  
+    if(defined $s->{fromdir} && defined $s->{todir}) {
+      $s->{reladir} = -90 + $s->{todir} - $s->{fromdir};  
       $s->{fromarrow} = 1;
-      $s->{fromdir} = $p;
-      return int $o; 
-      }
-    else {
-      $o = -1000;
+      return int $s->{reladir}; 
       }
 #     $out->{error} .= $o."<br>";  
     } 
@@ -147,22 +147,22 @@ sub getDirection {
     if($db->{way}{$s->{to}}){
       my @ns = @{$db->{way}{$s->{to}}{nodes}};
       if ($ns[0] == $s->{intersection}) {
-        $o = calcDirection($ns[0],$ns[min(scalar @ns-1, 2)]);
+        $s->{todir} = calcDirection($ns[0],$ns[min(scalar @ns-1, 2)]);
         }
       elsif ($ns[-1] == $s->{intersection}) {
-        $o = calcDirection($ns[-1],$ns[-min(scalar @ns,3)]);
+        $s->{todir} = calcDirection($ns[-1],$ns[-min(scalar @ns,3)]);
         }
       }
     }
   #To-node and intersection node
   elsif ($s->{tonode} && $s->{intersection}) {
-    $o = calcDirection($s->{intersection},$s->{tonode});
+    $s->{todir} = calcDirection($s->{intersection},$s->{tonode});
     }
   #To-node and sign node
   elsif ($s->{tonode} && $s->{sign}) {
-    $o = calcDirection($s->{sign},$s->{tonode});
+    $s->{todir} = calcDirection($s->{sign},$s->{tonode});
     }
-  return int $o;  
+  return int $s->{todir};  
   }
 
 #Helper: is an object member of a given relation?  
@@ -396,6 +396,7 @@ sub parseData {
     push(@{$s->{froms}},'') if (scalar @{$s->{froms}} == 0);
     
     foreach my $f (@{$s->{froms}}) {
+      my $d;  #data store for json
       $s->{fromarrow} = 0;  
       $s->{from} = $f;
       $s->{to}   = getBestTo($s);
@@ -410,19 +411,22 @@ sub parseData {
         $s->{wayname} = getNamedWay($s);
         $s->{wayref}  = getRef($s, $i);
     
-        $s->{dura} = getTimeDistance($w,$i);
+        $s->{duration} = getTimeDistance($w,$i);
         $s->{symbol} = getSymbol($w,$i);
+        $s->{colourtext} = $db->{relation}{$w}{'tags'}{'colour:text'};
+        $s->{colourback} = $db->{relation}{$w}{'tags'}{'colour:back'};
+        $s->{colourarrow}= $db->{relation}{$w}{'tags'}{'colour:arrow'};
 
         my $o;
         $o = "<div class=\"entry\" style=\"";
-        $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:text'}.";" if $db->{relation}{$w}{'tags'}{'colour:text'}; 
-        $o .= "background:".$db->{relation}{$w}{'tags'}{'colour:back'}.";"; 
+        $o .= "color:".$s->{colourtext}.";" if $s->{colourtext}; 
+        $o .= "background:".$s->{colourback}.";" if $s->{colourback}; 
         $o .= "\">";
         
       
         $o .= "<div class=\"compass\" style=\"";
-        if ($db->{relation}{$w}{'tags'}{'colour:arrow'} && $db->{relation}{$w}{'tags'}{'colour:back'} ne $db->{relation}{$w}{'tags'}{'colour:arrow'}) {
-          $o .= "color:".$db->{relation}{$w}{'tags'}{'colour:arrow'}.";" ; 
+        if ($s->{colourarrow} && $s->{colourback} ne $s->{colourarrow}) {
+          $o .= "color:".$s->{colourarrow}.";" ; 
           }
         $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
         if($s->{dir} != -1000) {  
@@ -444,7 +448,7 @@ sub parseData {
         $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
         $o .= "</div>";
         
-        $o .= "<div class=\"dura\">$s->{dura}</div>";
+        $o .= "<div class=\"dura\">$s->{duration}</div>";
         $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
         $o .= "</div>";
         if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
@@ -489,7 +493,7 @@ foreach my $e (sort keys %{$entries}) {
     }
   }
 
-$out->{html} = $o;
+$out->{html} = $o unless $format eq 'json';
 $out->{lat} = $db->{node}{$q->param('nodeid')}{lat};
 $out->{lon} = $db->{node}{$q->param('nodeid')}{lon};
 
