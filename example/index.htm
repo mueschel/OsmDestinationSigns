@@ -11,7 +11,7 @@
   crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"
   integrity="sha512-mNqn2Wg7tSToJhvHcqfzLMU6J4mkOImSPTxVZAdo+lcPlk+GhZmYgACEe0x35K7YzW1zJ7XyJV/TT1MrdXvMcA=="
-  crossorigin=""></script> 
+  crossorigin=""></script>
 <!--  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" /> -->
  <link rel="stylesheet" type="text/css" href="../example/website.css">
 <!--  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script> -->
@@ -29,9 +29,9 @@
 <div class="config">
 <h3>Configuration</h3>
 <div><form action="" onsubmit="getsign(document.getElementsByName('nodeid')[0].value); return false;">
-  <label title="Id of an intersection or guidepost node">Node Id: 
-    <input type="text" name="nodeid"></label> 
-  <br><label title="Some Examples">Some (interesting) examples: 
+  <label title="Id of an intersection or guidepost node">Node Id:
+    <input type="text" name="nodeid"></label>
+  <br><label title="Some Examples">Some (interesting) examples:
     <select name="nodeid" onChange="getsign(this.value);">
       <option value="3731895314">3731895314 - bi-lingual
       <option value="1938162531">1938162531
@@ -76,7 +76,7 @@ var map = L.map('map').setView([46.72539, 11.42286], 12);
 
 L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png',
   { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
-  
+
 L.layerJSON({
   url: 'http://overpass-api.de/api/interpreter?data=[out:json];relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.a;node(r.a:"sign")->.b;.b out;rel(bn.b)["type"="destination_sign"]->.c;(.a - .c)->.d;node(r.d:"intersection")->.e;.e out;',
   propertyItems: 'elements',
@@ -100,7 +100,7 @@ L.layerJSON({
         o += k+" = "+data.tags[k]+"<br>";
         }
       }
-    return o;  
+    return o;
     }
   })
 
@@ -110,12 +110,24 @@ L.layerJSON({
 map.addControl(new L.Control.Permalink({text: 'Permalink'}));
 
 var hash = (location.hash ||'').replace(/^#/,'').split('&');
+var namedroutes = false;
+var fromarrow = false;
 for(i=0; i<hash.length; i++ ){
   var t = hash[i].split('=');
   if (t[0]=='node') {
     getsign(t[1]);
     }
+  if (t[0]=="namedroutes"){
+    namedroutes = true;
+    }
+  if (t[0]=="fromarrow"){
+    fromarrow = true;
+    }
   }
+  if (hash[0]){
+    document.getElementsByName('namedroutes')[0].checked = namedroutes;
+    document.getElementsByName('fromarrow')[0].checked = fromarrow;
+    }
 
 
 </script>
