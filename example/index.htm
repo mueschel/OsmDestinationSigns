@@ -58,8 +58,8 @@
       <option value="275664964">275664964 - with various from's
       <option value="4554236964">4554236964 - with many from; time and distance
     </select></label>
-    <div><input type="checkbox" name="namedroutes" checked="checked"> Add names of routes</input>
-    <br><input type="checkbox" name="fromarrow" checked="checked"> Show hollow arrows as seen from 'from' way</input>
+    <div><input type="checkbox" name="namedroutes" checked="checked" onChange="updatelink()"> Add names of routes</input>
+    <br><input type="checkbox" name="fromarrow" checked="checked" onChange="updatelink()"> Show hollow arrows as seen from 'from' way</input>
     <br><a id="permanode" href="">Link to this node</a>
 </form>
 </div>
@@ -112,10 +112,11 @@ map.addControl(new L.Control.Permalink({text: 'Permalink'}));
 var hash = (location.hash ||'').replace(/^#/,'').split('&');
 var namedroutes = false;
 var fromarrow = false;
+var node = 0;
 for(i=0; i<hash.length; i++ ){
   var t = hash[i].split('=');
   if (t[0]=='node') {
-    getsign(t[1]);
+    node = t[1];
     }
   if (t[0]=="namedroutes"){
     namedroutes = true;
@@ -128,7 +129,9 @@ for(i=0; i<hash.length; i++ ){
     document.getElementsByName('namedroutes')[0].checked = namedroutes;
     document.getElementsByName('fromarrow')[0].checked = fromarrow;
     }
-
+  if(node) {
+    getsign(node);
+    } 
 
 </script>
 
