@@ -14,6 +14,7 @@ use List::MoreUtils qw(uniq);
 use List::Util qw(min max);
 use Math::Trig;
 use Encode;
+use Storable 'dclone';
 
 print "Content-Type: application/json; charset=utf-8\r\n\r\n";
 
@@ -21,6 +22,7 @@ my $q = CGI->new;
 my $data, my $db;
 my $entries;
 my $out;
+my $d;  #data store for json
 $out->{error} = '';
 
 my $format = $q->param('format') || 'html';
@@ -105,7 +107,7 @@ sub calcDirection {
   $anga = 180-$anga  if $dxa<0 && $dya<0;
   $anga = 0+$anga    if $dxa>=0 && $dya<0;
   
-  return $anga;
+  return int $anga if defined $anga;
   }     
   
 #################################################
@@ -162,7 +164,7 @@ sub getDirection {
   elsif ($s->{tonode} && $s->{sign}) {
     $s->{todir} = calcDirection($s->{sign},$s->{tonode});
     }
-  return int $s->{todir};  
+  return int $s->{todir}   if defined $s->{todir};  
   }
 
 #Helper: is an object member of a given relation?  
@@ -182,7 +184,7 @@ sub isWayNode {
   my $pos = -1;
   foreach my $k (@{$db->{way}{$parid}{'nodes'}}) {
     $pos++;
-    if ($k == $id) {
+    if ($k == ($id||0)) {
       return $pos;
       }
     }
@@ -315,16 +317,23 @@ sub getSymbol {
     return $t[$num];
     }  
   }
-  
-sub getTimeDistance {
+
+sub getTime {
   my ($r,$num) = @_;
   $num //= 0;
-  my $o = '';
+  my $o;
   my @t = split(';',$db->{relation}{$r}{'tags'}{'time'});
   if($t[$num]) {
     $o .= $t[$num];
     }
-  @t = split(';',$db->{relation}{$r}{'tags'}{'distance'});
+  return $o;  
+  }  
+  
+sub getDistance {
+  my ($r,$num) = @_;
+  $num //= 0;
+  my $o;
+  my @t = split(';',$db->{relation}{$r}{'tags'}{'distance'});
   if($t[$num]) {
     if($o) {$o .= ' | ';}
     $o .= $t[$num];
@@ -352,6 +361,26 @@ sub getBestTo {
       }
     }
   return $o;
+  }
+
+sub getColours {
+  my ($w,$s) = @_;
+  $s->{colourtext} = $db->{relation}{$w}{'tags'}{'colour:text'};
+  $s->{colourback} = $db->{relation}{$w}{'tags'}{'colour:back'};
+  $s->{colourarrow}= $db->{relation}{$w}{'tags'}{'colour:arrow'};
+  
+  if($s->{colourarrow} eq $s->{colourback}) {
+    $s->{colourarrow} = '';
+    }
+  if($s->{colourtext} eq $s->{colourback}) {
+    $s->{colourtext} = '';
+    }
+  if($s->{colourarrow} eq 'white' && $s->{colourback} eq '') {  
+    $s->{colourback} = '#ffbbbb';
+    }
+  if($s->{colourtext} eq 'white' && $s->{colourback} eq '') {  
+    $s->{colourback} = '#ffbbbb';
+    }    
   }
   
 #################################################
@@ -396,7 +425,6 @@ sub parseData {
     push(@{$s->{froms}},'') if (scalar @{$s->{froms}} == 0);
     
     foreach my $f (@{$s->{froms}}) {
-      my $d;  #data store for json
       $s->{fromarrow} = 0;  
       $s->{from} = $f;
       $s->{to}   = getBestTo($s);
@@ -411,11 +439,10 @@ sub parseData {
         $s->{wayname} = getNamedWay($s);
         $s->{wayref}  = getRef($s, $i);
     
-        $s->{duration} = getTimeDistance($w,$i);
+        $s->{duration} = getTime($w,$i);
+        $s->{distance} = getDistance($w,$i);
         $s->{symbol} = getSymbol($w,$i);
-        $s->{colourtext} = $db->{relation}{$w}{'tags'}{'colour:text'};
-        $s->{colourback} = $db->{relation}{$w}{'tags'}{'colour:back'};
-        $s->{colourarrow}= $db->{relation}{$w}{'tags'}{'colour:arrow'};
+        getColours($w,$s);
 
         my $o;
         $o = "<div class=\"entry\" style=\"";
@@ -429,7 +456,7 @@ sub parseData {
           $o .= "color:".$s->{colourarrow}.";" ; 
           }
         $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
-        if($s->{dir} != -1000) {  
+        if(defined $s->{dir} && $s->{dir} ne '') {  
           if(defined $q->param('fromarrow') && $s->{fromarrow}) {
             $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e8;</div>";
             }
@@ -448,15 +475,19 @@ sub parseData {
         $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
         $o .= "</div>";
         
-        $o .= "<div class=\"dura\">$s->{duration}</div>";
+        $o .= "<div class=\"dura\">$s->{duration}$s->{distance}</div>";
         $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
         $o .= "</div>";
+
+        my $order = $s->{dir}.$s->{dest}.$i.$w;
         if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
-          $entries->{$s->{fromdir}}{$s->{dir}.$s->{dest}.$i.$w} = $o;
+          $entries->{$s->{fromdir}}{$order} = $o;
           }
         else {
-          $entries->{'all'}{$s->{dir}.$s->{dest}.$i.$w} = $o;
+          $entries->{'all'}{$order} = $o;
           }
+        push(@$d,dclone $s);
+        delete($d->[-1]{fromarrow});
         }
       }
 
@@ -478,7 +509,7 @@ sub parseData {
   
   
  
-readData($q->param('nodeid')) && parseData($q->param('nodeid'));
+readData(scalar $q->param('nodeid')) && parseData(scalar $q->param('nodeid'));
 
 my $o;
 foreach my $e (sort keys %{$entries}) {
@@ -493,6 +524,7 @@ foreach my $e (sort keys %{$entries}) {
     }
   }
 
+$out->{data} = $d;
 $out->{html} = $o unless $format eq 'json';
 $out->{lat} = $db->{node}{$q->param('nodeid')}{lat};
 $out->{lon} = $db->{node}{$q->param('nodeid')}{lon};
