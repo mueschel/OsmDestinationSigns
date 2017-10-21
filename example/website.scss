@@ -20,7 +20,16 @@ div#header {
     display:inline-block;
   }
 }  
-  
+
+div#key {
+  width:200px;
+  position:fixed;
+  right:0;
+  top:0;
+  background:#f2f5f7;
+  border:1px solid white;
+}
+
 div.config {
   display: block;
   width: 400px;

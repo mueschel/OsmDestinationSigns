@@ -22,7 +22,7 @@
 <body class="mappage">
 <div id="header">
 <h1>Destination Signs</h1>
-<p><strong>This tool shows the content of relations with "type=destination_sign".</strong>
+<p><strong>This tool shows the content of relations with "type=destination_sign" and "direction_*" tags on guideposts.</strong>
 <br>Please enter an Id of an intersection node or a guidepost - or do it the simple way and select a marker from the map.
 <br>Click on the arrow to get to the corresponding OSM object.
 <br>The code is available on <a href="https://github.com/mueschel/OsmDestinationSigns">Github</a>.
@@ -68,7 +68,8 @@
 <div style="margin-bottom:50px;margin-top:10px;clear:both;width:420px;height:1px;border-bottom:1px solid black;">
 <p><div id="map"></div>
 <div id="container">&nbsp;</div>
-
+<div id="key"><dl><dt>solid arrows<dd>cardinal direction<dt>hollow arrows<dd>direction as seen from 'from' way<dt>dotted arrow<dd>approximate direction</dl>
+</div>
 
 </body>
 <script type="text/javascript">
@@ -78,7 +79,21 @@ L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png',
   { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
 
 L.layerJSON({
-  url: 'http://overpass-api.de/api/interpreter?data=[out:json];relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.a;node(r.a:"sign")->.b;.b out;rel(bn.b)["type"="destination_sign"]->.c;(.a - .c)->.d;node(r.d:"intersection")->.e;.e out;',
+  url: 'http://overpass-api.de/api/interpreter?data=\
+  [out:json];\
+relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.a;\
+node(r.a:"sign")->.b;\
+.b out;\
+\
+rel(bn.b)["type"="destination_sign"]->.c;\
+(.a - .c)->.d;\
+node(r.d:"intersection")->.e;\
+.e out;\
+\
+node[information=guidepost][~"^direction_"~".*"]({lat1},{lon1},{lat2},{lon2})->.f;\
+(.f - .b)->.g;\
+.g out;\
+',
   propertyItems: 'elements',
   propertyTitle: 'tags.name',
   propertyLoc: ['lat','lon'],

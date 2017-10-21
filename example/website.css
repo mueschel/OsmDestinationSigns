@@ -3,6 +3,7 @@ body {
   font-size: 12px;
   font-family: sans-serif;
   min-width: 1200px;
+  width:100%;
   z-index: 1; }
 
 * {
@@ -16,6 +17,14 @@ div#header {
   div#header h1 {
     display: inline-block; }
 
+div#key {
+  width:200px;
+  position:fixed;
+  right:0;
+  top:0;
+  background:#f2f5f7;
+  border:1px solid white;
+}
 div.config {
   display: block;
   width: 400px;
