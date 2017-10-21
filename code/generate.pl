@@ -16,7 +16,8 @@ use Math::Trig;
 use Encode;
 use Storable 'dclone';
 
-print "Content-Type: application/json; charset=utf-8\r\n\r\n";
+print "Content-Type: application/json; charset=utf-8\r\n";
+print "Access-Control-Allow-Origin: *\r\n\r\n";
 
 my $q = CGI->new;
 my $data, my $db;
@@ -443,71 +444,103 @@ sub parseData {
         $s->{distance} = getDistance($w,$i);
         $s->{symbol} = getSymbol($w,$i);
         getColours($w,$s);
-
-        my $o;
-        $o = "<div class=\"entry\" style=\"";
-        $o .= "color:".$s->{colourtext}.";" if $s->{colourtext}; 
-        $o .= "background:".$s->{colourback}.";" if $s->{colourback}; 
-        $o .= "\">";
         
-      
-        $o .= "<div class=\"compass\" style=\"";
-        if ($s->{colourarrow} && $s->{colourback} ne $s->{colourarrow}) {
-          $o .= "color:".$s->{colourarrow}.";" ; 
-          }
-        $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
-        if(defined $s->{dir} && $s->{dir} ne '') {  
-          if(defined $q->param('fromarrow') && $s->{fromarrow}) {
-            $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e8;</div>";
-            }
-          else {  
-            $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
-            }
-          }
-        else {
-          $o .= "<div>?</div>";
-          }
-        $o .= '</div>';  
+        if($format ne 'json') {
+          my $o;
+          $o = "<div class=\"entry\" style=\"";
+          $o .= "color:".$s->{colourtext}.";" if $s->{colourtext}; 
+          $o .= "background:".$s->{colourback}.";" if $s->{colourback}; 
+          $o .= "\">";
           
-          
-        $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
-        $o .= "<div class=\"dest\">$s->{dest}";
-        $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
-        $o .= "</div>";
         
-        $o .= "<div class=\"dura\">$s->{duration}$s->{distance}</div>";
-        $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
-        $o .= "</div>";
+          $o .= "<div class=\"compass\" style=\"";
+          if ($s->{colourarrow} && $s->{colourback} ne $s->{colourarrow}) {
+            $o .= "color:".$s->{colourarrow}.";" ; 
+            }
+          $o .= "\"  onClick=\"showObj('relation',".$db->{relation}{$w}{'id'}.")\">";
+          if(defined $s->{dir} && $s->{dir} ne '') {  
+            if(defined $q->param('fromarrow') && $s->{fromarrow}) {
+              $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e8;</div>";
+              }
+            else {  
+              $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#10137;</div>";
+              }
+            }
+          else {
+            $o .= "<div>?</div>";
+            }
+          $o .= '</div>';  
+            
+            
+          $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
+          $o .= "<div class=\"dest\">$s->{dest}";
+          $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
+          $o .= "</div>";
+          
+          $o .= "<div class=\"dura\">$s->{duration}$s->{distance}</div>";
+          $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
+          $o .= "</div>";
 
-        my $order = $s->{dir}.$s->{dest}.$i.$w;
-        if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
-          $entries->{$s->{fromdir}}{$order} = $o;
-          }
-        else {
-          $entries->{'all'}{$order} = $o;
+          my $order = $s->{dir}.$s->{dest}.$i.$w;
+          if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
+            $entries->{$s->{fromdir}}{$order} = $o;
+            }
+          else {
+            $entries->{'all'}{$order} = $o;
+            }
           }
         push(@$d,dclone $s);
         delete($d->[-1]{fromarrow});
         }
       }
-
-    my $o = '';
-    unless($entries->{'Z'.$s->{sign}}) {
-      $o .= "<span><a href=\"".$db->{node}{$s->{sign}}{'tags'}{'image'}."\">Image</a></span>" if $db->{node}{$s->{sign}}{'tags'}{'image'};
-      $o .= "<span><a href=\"http://www.mapillary.com/map/im/".$db->{node}{$s->{sign}}{'tags'}{'mapillary'}."\">Mapillary</a></span>" if $db->{node}{$s->{sign}}{'tags'}{'mapillary'};
-      $o .= "<span><a href=\"".$db->{node}{$s->{sign}}{'tags'}{'website'}."\">Website</a></span>" if $db->{node}{$s->{sign}}{'tags'}{'website'};
-      $o .= "<span>Operator: $db->{node}{$s->{sign}}{'tags'}{'operator'}</span>" if $db->{node}{$s->{sign}}{'tags'}{'operator'};
-      
-      if($o) {
-        $o = "<div class=\"details\">".$o."</div>";
-        }
-      $entries->{'all'}{'Z'.$s->{sign}} = $o;
-      }  
     }
+    
+#The 'direction' stuff    
+  my $o = '';
+  my $sign = $startnode;
+  my $tags = join(' ',keys(%{$db->{node}{$sign}{'tags'}}));
+  my $dir = 45;
+  if ($tags =~ /direction_/) {
+    foreach my $ke (qw(east northeast north northwest west southwest south southeast )) {
+      my $key = 'direction_'.$ke;
+      $dir -= 45;
+      next unless defined $db->{node}{$sign}{'tags'}{$key};
+      
+      my @dests = split(';',$db->{node}{$sign}{'tags'}{$key});
+      for my $i (0 .. scalar @dests -1) {
+        my $s;
+        $s->{dir} = $dir;
+        $s->{dest} = $dests[$i];
+        $o = "<div class=\"entry\">";
+        $o .= "<div class=\"compass\"";
+        $o .= "onClick=\"showObj('node',".$sign.")\">";
+        $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e2;</div>";
+        $o .= '</div>';  
+        $o .= "<div class=\"dest\">$s->{dest}</div>";
+        $o .= "</div>";
+        push(@$d,dclone $s);
+        $entries->{'all'}{$s->{dir}.$s->{dest}.$i} = $o;
+        }
+      }
+    } 
+
+#Information added to sign  
+  $o = '';
+  if(defined $d && scalar @$d) {
+    $sign = $d->[-1]{sign};
+    $o .= "<span><a href=\"".$db->{node}{$sign}{'tags'}{'image'}."\">Image</a></span>" if $db->{node}{$sign}{'tags'}{'image'};
+    $o .= "<span><a href=\"http://www.mapillary.com/map/im/".$db->{node}{$sign}{'tags'}{'mapillary'}."\">Mapillary</a></span>" if $db->{node}{$sign}{'tags'}{'mapillary'};
+    $o .= "<span><a href=\"".$db->{node}{$sign}{'tags'}{'website'}."\">Website</a></span>" if $db->{node}{$sign}{'tags'}{'website'};
+    $o .= "<span>Operator: $db->{node}{$sign}{'tags'}{'operator'}</span>" if $db->{node}{$sign}{'tags'}{'operator'};
+    
+    if($o) {
+      $o = "<div class=\"details\">".$o."</div>";
+      }
+    $entries->{'all'}{'Z'.$sign} = $o;
+    }
+
   }
 
-  
-  
  
 readData(scalar $q->param('nodeid')) && parseData(scalar $q->param('nodeid'));
 
@@ -528,6 +561,7 @@ $out->{data} = $d;
 $out->{html} = $o unless $format eq 'json';
 $out->{lat} = $db->{node}{$q->param('nodeid')}{lat};
 $out->{lon} = $db->{node}{$q->param('nodeid')}{lon};
+$out->{node} = $q->param('nodeid');
 
 print  encode_json($out);
 
