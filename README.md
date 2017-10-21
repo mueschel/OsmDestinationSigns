@@ -19,6 +19,19 @@ All code is included in the code directory - a Perl script generating the signs,
 
 The example directory contains a Leaflet map page with markers for interesting points. It needs an additional library to load data from Overpass (leaflet-layerjson.js) which can be found here: https://github.com/stefanocudini/leaflet-layerJSON and leaflet-permalink.js which can be found here: https://github.com/shramov/leaflet-plugins/ 
 
+API
+---
+A simple API is available to retrieve information from a given sign:
+
+`code/generate.pl?nodeid=123456789&namedroutes&fromarrow&format=json`
+
+It is required to give an ID of a node that is member of destination_sign relations as `nodeid=` . Optional arguments are:
+
+* namedroutes - include the names for names of routes
+* fromarrow - take 'from' information into account and add arrows showing the actual direction of arrows on signs
+* format=json - to get all information in plain JSON, not as HTML rendering (default)
+
+
 License
 ---
 This tool is available under cc-by-sa 3.0 https://creativecommons.org/licenses/by-sa/3.0/ The code is distributed as-is without any guarantee whatsoever.
