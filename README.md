@@ -25,11 +25,13 @@ A simple API is available to retrieve information from a given sign:
 
 `code/generate.pl?nodeid=123456789&namedroutes&fromarrow&format=json`
 
-It is required to give an ID of a node that is member of destination_sign relations as `nodeid=` . Optional arguments are:
+The available arguments are:
 
-* namedroutes - include the names for names of routes
-* fromarrow - take 'from' information into account and add arrows showing the actual direction of arrows on signs
-* format=json - to get all information in plain JSON, not as HTML rendering (default)
+* `nodeid` - required, gives the node of a destination sign to be evaluated (required)
+* `namedroutes` - include the names for names of routes
+* `fromarrow` - take 'from' information into account and add arrows showing the actual direction of arrows on signs
+* `distunit=(m|km|mi)` - convert distance to either meter, kilometer or miles.
+* `format=json` - to get all information in plain JSON only. If not specified, output contains a HTML rendering as well as data.
 
 
 License

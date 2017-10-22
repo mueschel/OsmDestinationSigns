@@ -13,6 +13,7 @@ use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use List::Util qw(min max);
 use Math::Trig;
+use HTML::Entities qw(encode_entities_numeric);
 use Encode;
 use Storable 'dclone';
 
@@ -27,7 +28,8 @@ my $d;  #data store for json
 $out->{error} = '';
 
 my $format = $q->param('format') || 'html';
-
+my $fast   = $q->param('fast');
+my $distanceunit = $q->param('distunit') || ''; #km, mi, m, empty (no change)
 
 #################################################
 ## Read and organize data
@@ -35,16 +37,20 @@ my $format = $q->param('format') || 'html';
 ################################################# 
 sub readData {
   my $input = shift @_;
-   my $url = 'http://overpass-api.de/api/interpreter';
-#  my $url = "http://localhost/destinationsign/$input.json";
   my $st = shift @_ || 0;
   my $json;
   
-  if($input =~ /elements/) {
-    from_to ($input,"iso-8859-1","utf-8");
-    $json = uri_unescape($input);
-    }
-  elsif ($input =~ /^[0-9]+$/ ) {
+#   if($input =~ /elements/) {
+#     from_to ($input,"iso-8859-1","utf-8");
+#     $json = uri_unescape($input);
+#     }
+#   els
+  if ($input =~ /^[0-9]+$/ ) {
+    my $url = 'http://overpass-api.de/api/interpreter';
+
+    if (-e "../data/$input.json") {
+      $url = "http://osm.mueschelsoft.de/destinationsign/data/$input.json";
+      }
     my $query = <<QUERY;
 [out:json][timeout:25];
 (
@@ -260,18 +266,19 @@ sub getNamedWay {
   
 #Take destination string, add destination:lang:XX (if not already in string)
 sub DestinationString {
-  my ($r,$num) = @_;
+  my ($s,$r,$num) = @_;
   $num //= 0;
   my @t = split(';',$db->{relation}{$r}{'tags'}{'destination'});
   my $o = $t[$num];
+  $s->{destination} = $t[$num];
   foreach my $k (keys %{$db->{relation}{$r}{'tags'}}) {
-    if ($k =~ /^destination:lang:/) {
+    if ($k =~ /^destination:lang:(.*)/) {
       @t = split(';',$db->{relation}{$r}{'tags'}{$k});
+      $s->{"destination:$1"} = $t[$num];
       next if (index($o,$t[$num]) != -1);
-      $o .= '<br>'.$t[$num];
+      $o .= '<br> '.$t[$num];
       }
     }
-  $o =~ s/;/<br>/g;
   return $o;
   }
 
@@ -319,28 +326,71 @@ sub getSymbol {
     }  
   }
 
+#check and convert times  
+sub fixTime {
+  my ($o) = @_;  
+  if ($o =~ /^([0-9]?[0-9]):([0-9]?[0-9])$/) { 
+    return sprintf("%02i:%02i",$1,$2); 
+    }
+  if ($o =~ /^\s*([0-9]+)\s*h\s*([0-9]{0,2})\s*$/) {
+    return sprintf("%02i:%02i",$1,$2//0); 
+    }
+  if ($o =~ /^\s*([0-9]+\.?[0-9]*)\s*h\s*$/) {
+    my $t = floor($1 * 60);
+    my $min = $t % 60; my $hour = floor($t / 60);
+    return sprintf("%02i:%02i",$hour,$min//0); 
+    }
+  if ($o =~ /^\s*([0-9]+)\s*min\s*$/) {
+    my $min = $1 % 60; my $hour = floor($1 / 60);
+    return sprintf("%02i:%02i",$hour,$min//0); 
+    }
+  }
+  
 sub getTime {
   my ($r,$num) = @_;
   $num //= 0;
-  my $o;
   my @t = split(';',$db->{relation}{$r}{'tags'}{'time'});
   if($t[$num]) {
-    $o .= $t[$num];
+    return fixTime($t[$num]);
+    } 
+  }  
+
+#check and convert distances  
+sub fixDistance {
+  my ($o,$distanceunit) = @_;
+  $o =~ s/,/\./;
+  $o .= ' km' if $o =~ /^[0-9\.]+$/;
+  if ($o =~ /([0-9\.]+)\s*(mi|km|m)/) {
+    $o = $1;
+    my $unit = $2;
+    if ($distanceunit eq '') {
+      $o .= ' '.$unit;
+      }
+    else {
+      if ($distanceunit eq 'm') {
+        $o = $o * 1609.344 if($unit eq 'mi');
+        $o = $o * 1000     if($unit eq 'km');
+        }
+      elsif ($distanceunit eq 'km') {
+        $o = $o * 1.609344 if($unit eq 'mi');
+        $o = $o / 1000     if($unit eq 'm');
+        }
+      elsif ($distanceunit eq 'mi') {
+        $o = $o / 1.609344 if($unit eq 'km');
+        $o = $o / 1609.344 if($unit eq 'm');
+        }
+      }
     }
   return $o;  
-  }  
+  }
   
 sub getDistance {
   my ($r,$num) = @_;
   $num //= 0;
-  my $o;
   my @t = split(';',$db->{relation}{$r}{'tags'}{'distance'});
   if($t[$num]) {
-    if($o) {$o .= ' | ';}
-    $o .= $t[$num];
-    $o .= ' km' if($t[$num] =~ /^[0-9\.]+$/)
+    return fixDistance($t[$num],$distanceunit);
     }
-  return $o;  
   }
 
 sub getBestTo {
@@ -383,7 +433,38 @@ sub getColours {
     $s->{colourback} = '#ffbbbb';
     }    
   }
+
   
+sub cleanValues {
+  my ($s) = @_;
+  $s->{symbol} =~ s/[^a-z0-9_]//g;
+  $s->{colourarrow} =~ s/[^#0-9a-zA-Z]//g;
+  $s->{colourback}  =~ s/[^#0-9a-zA-Z]//g;
+  $s->{colourtext}  =~ s/[^#0-9a-zA-Z]//g;
+  }
+
+  
+sub encodeDespiteBR {
+  my $s = shift @_;
+  encode_entities_numeric($s);
+  $s =~ s/&#x3C;br&#x3E;/<br>/g;
+  return $s;
+  }
+  
+sub encodeValues {  
+  my ($s) = @_;
+  foreach my $k (keys %$s) {
+    if($k =~ /^destination/) {
+      $s->{$k} = encode_entities_numeric($s->{$k});
+      }
+    }
+  
+  $s->{deststring} = encodeDespiteBR($s->{deststring}); 
+  $s->{wayref}     = encodeDespiteBR($s->{wayref});  
+  $s->{wayname}    = encodeDespiteBR($s->{wayname});  
+  
+  }
+   
 #################################################
 ## Read & Display information from relations
 #################################################  
@@ -436,7 +517,7 @@ sub parseData {
 
       
       foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
-        $s->{dest} = DestinationString($w,$i);
+        $s->{deststring} = DestinationString($s,$w,$i);
         $s->{wayname} = getNamedWay($s);
         $s->{wayref}  = getRef($s, $i);
     
@@ -444,6 +525,12 @@ sub parseData {
         $s->{distance} = getDistance($w,$i);
         $s->{symbol} = getSymbol($w,$i);
         getColours($w,$s);
+        cleanValues($s);
+        
+        push(@$d,dclone $s);
+        delete($d->[-1]{fromarrow});
+        
+        encodeValues($s);
         
         if($format ne 'json') {
           my $o;
@@ -471,9 +558,8 @@ sub parseData {
             }
           $o .= '</div>';  
             
-            
           $o .= "<div class=\"ref\">".($s->{wayref}||'&nbsp;')."</div>";
-          $o .= "<div class=\"dest\">$s->{dest}";
+          $o .= "<div class=\"dest\">".$s->{deststring};
           $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
           $o .= "</div>";
           
@@ -481,7 +567,7 @@ sub parseData {
           $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
           $o .= "</div>";
 
-          my $order = $s->{dir}.$s->{dest}.$i.$w;
+          my $order = $s->{dir}.$s->{deststring}.$i.$w;
           if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
             $entries->{$s->{fromdir}}{$order} = $o;
             }
@@ -489,8 +575,6 @@ sub parseData {
             $entries->{'all'}{$order} = $o;
             }
           }
-        push(@$d,dclone $s);
-        delete($d->[-1]{fromarrow});
         }
       }
     }
@@ -510,16 +594,17 @@ sub parseData {
       for my $i (0 .. scalar @dests -1) {
         my $s;
         $s->{dir} = $dir;
-        $s->{dest} = $dests[$i];
+        $s->{deststring} = $dests[$i];
+        cleanValues($s);
         $o = "<div class=\"entry\">";
         $o .= "<div class=\"compass\"";
         $o .= "onClick=\"showObj('node',".$sign.")\">";
         $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e2;</div>";
         $o .= '</div>';  
-        $o .= "<div class=\"dest\">$s->{dest}</div>";
+        $o .= "<div class=\"dest\">$s->{deststring}</div>";
         $o .= "</div>";
         push(@$d,dclone $s);
-        $entries->{'all'}{$s->{dir}.$s->{dest}.$i} = $o;
+        $entries->{'all'}{$s->{dir}.$s->{deststring}.$i} = $o;
         }
       }
     } 
