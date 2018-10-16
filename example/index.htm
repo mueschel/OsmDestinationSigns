@@ -75,7 +75,7 @@
 <script type="text/javascript">
 var map = L.map('map').setView([46.72539, 11.42286], 12);
 
-L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png',
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
 
 L.layerJSON({
@@ -86,19 +86,21 @@ node(r.a:"sign")->.b;\
 .b out;\
 \
 rel(bn.b)["type"="destination_sign"]->.c;\
-(.a - .c)->.d;\
+(.a; - .c;)->.d;\
 node(r.d:"intersection")->.e;\
 .e out;\
 \
 node[information=guidepost][~"^direction_"~".*"]({lat1},{lon1},{lat2},{lon2})->.f;\
-(.f - .b)->.g;\
+(.f; - .b;)->.g;\
 .g out;\
 ',
   propertyItems: 'elements',
   propertyTitle: 'tags.name',
   propertyLoc: ['lat','lon'],
   minShift: 100,
-  updateOutBounds: true,
+  minZoom: 9,
+  attribution: "POI data from overpass API under ODbL",
+  updateOutBounds: false,
   buildIcon: function(data, title) {
     return new L.Icon({
       iconUrl:'../code/marker-icon.png',

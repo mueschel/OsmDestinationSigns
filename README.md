@@ -15,7 +15,7 @@ Supported tagging features:
 
 Usage
 ---
-All code is included in the code directory - a Perl script generating the signs, a JavaScript file for control on the users' side and a style file.
+All code is included in the code directory - a Perl script generating the signs, a JavaScript file for control on the users' side and a style file to render the HTML output.
 
 The example directory contains a Leaflet map page with markers for interesting points. It needs an additional library to load data from Overpass (leaflet-layerjson.js) which can be found here: https://github.com/stefanocudini/leaflet-layerJSON and leaflet-permalink.js which can be found here: https://github.com/shramov/leaflet-plugins/ 
 
@@ -32,6 +32,7 @@ The available arguments are:
 * `fromarrow` - take 'from' information into account and add arrows showing the actual direction of arrows on signs
 * `distunit=(m|km|mi)` - convert distance to either meter, kilometer or miles.
 * `format=json` - to get all information in plain JSON only. If not specified, output contains a HTML rendering as well as data.
+
 
 
 License
