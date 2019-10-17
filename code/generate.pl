@@ -47,7 +47,9 @@ sub readData {
 #   els
   if ($input =~ /^[0-9]+$/ ) {
     my $url = 'http://overpass-api.de/api/interpreter';
-
+#     if($fast) {
+      $url = 'http://cerberus.x-matter.uni-frankfurt.de:45680/api/interpreter';
+#       }
     if (-e "../data/$input.json") {
       $url = "http://osm.mueschelsoft.de/destinationsign/data/$input.json";
       }
@@ -246,7 +248,7 @@ sub searchIntersection {
     }
   }
 
-  
+#TODO get name if 'to' is node of way belonging to named route
 sub getNamedWay {
   my ($s) = @_;
   my $o;
@@ -254,7 +256,8 @@ sub getNamedWay {
     if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
         grep(/^$db->{relation}{$r}{'tags'}{'route'}$/, qw(foot mtb hiking bicycle horse))) {
       if (isRelationMember('way',$s->{to},$r)) { 
-        if ($db->{relation}{$r}{'tags'}{'name'}) {
+        if ($db->{relation}{$r}{'tags'}{'name'} && 
+            $db->{relation}{$r}{'tags'}{'name'} ne $db->{relation}{$r}{'tags'}{'ref'}) {
           $o .= '<br>' if $o;
           $o .= $db->{relation}{$r}{'tags'}{'name'};
           }
@@ -292,12 +295,14 @@ sub getRef {
   if ($db->{relation}{$s->{id}}{'tags'}{'destination:ref'}) {
     my @tmp = split(';',$db->{relation}{$s->{id}}{'tags'}{'destination:ref'});
     push(@out,@tmp) unless defined $p;
-    push(@out,$tmp[$p]) if defined $p;
+    push(@out,$tmp[$p]) if defined $p && scalar @tmp > $p;
+    push(@out,$tmp[0])  if defined $p && scalar @tmp == 1;
     }
   else {
     #ref from ref on to-way  
     if ($db->{way}{$s->{to}}{'tags'}{'ref'}) {
-      push(@out,$db->{way}{$s->{to}}{'tags'}{'ref'});
+      my @tmp = split(';',$db->{way}{$s->{to}}{'tags'}{'ref'});
+      push(@out,@tmp);
       }
     #ref from relation to-way belongs to
     foreach my $r (keys %{$db->{relation}}) { 
@@ -305,7 +310,8 @@ sub getRef {
           $db->{relation}{$r}{'tags'}{'route'} eq 'hiking') {
         if (isRelationMember('way',$s->{to},$r)) {    
           if ($db->{relation}{$r}{'tags'}{'ref'}) {
-            push(@out,$db->{relation}{$r}{'tags'}{'ref'});
+            my @tmp = split(';',$db->{relation}{$r}{'tags'}{'ref'});
+            push(@out,@tmp);
             }
           } 
         }
@@ -567,7 +573,7 @@ sub parseData {
           $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
           $o .= "</div>";
 
-          my $order = $s->{dir}.$s->{deststring}.$i.$w;
+          my $order = $s->{dir}.$i.$s->{deststring}.$w;
           if(defined $q->param('fromarrow')  && $s->{fromarrow}) {
             $entries->{$s->{fromdir}}{$order} = $o;
             }
@@ -584,13 +590,16 @@ sub parseData {
   my $sign = $startnode;
   my $tags = join(' ',keys(%{$db->{node}{$sign}{'tags'}}));
   my $dir = 45;
-  if ($tags =~ /direction_/) {
-    foreach my $ke (qw(east northeast north northwest west southwest south southeast )) {
-      my $key = 'direction_'.$ke;
+  if ($tags =~ /direction_/ ) {
+    foreach my $ke (qw(direction_east direction_northeast direction_north direction_northwest direction_west direction_southwest direction_south direction_southeast)) {
+      my $key = $ke;
       $dir -= 45;
       next unless defined $db->{node}{$sign}{'tags'}{$key};
       
-      my @dests = split(';',$db->{node}{$sign}{'tags'}{$key});
+      my @dests = split(/;/,$db->{node}{$sign}{'tags'}{$key});      
+      if (scalar @dests == 1) {
+        @dests = split(/,/,$db->{node}{$sign}{'tags'}{$key});      
+        }
       for my $i (0 .. scalar @dests -1) {
         my $s;
         $s->{dir} = $dir;
@@ -604,11 +613,41 @@ sub parseData {
         $o .= "<div class=\"dest\">$s->{deststring}</div>";
         $o .= "</div>";
         push(@$d,dclone $s);
-        $entries->{'all'}{$s->{dir}.$s->{deststring}.$i} = $o;
+        $entries->{'all'}{$s->{dir}.$i.' '.$s->{deststring}} = $o;
         }
       }
     } 
 
+ if ($tags =~ /destination/) {
+    my $key = 'destination';
+    my $dest = $db->{node}{$sign}{'tags'}{$key};
+    my @dests;
+    if (index($dest,'|') != -1) {
+      $dest =~ s/;/<br>/g;
+      @dests = split(/\|/,$dest);
+      }
+    else {  
+      $dest =~ s/,/<br>/g;
+      @dests = split(/;/,$dest);
+      }
+    for my $i (0 .. scalar @dests -1) {
+      my $s;
+      $s->{dir} = $dir;
+      $s->{deststring} = $dests[$i];
+      cleanValues($s);
+      $o = "<div class=\"entry\">";
+      $o .= "<div class=\"compass\"";
+      $o .= "onClick=\"showObj('node',".$sign.")\">";
+      $o .= '</div>';  
+      $o .= "<div class=\"dest\">$s->{deststring}</div>";
+      $o .= "</div>";
+      push(@$d,dclone $s);
+      $entries->{'all'}{$s->{dir}.$i.' '.$s->{deststring}} = $o;
+      }
+    
+    }    
+    
+    
 #Information added to sign  
   $o = '';
   if(defined $d && scalar @$d) {
