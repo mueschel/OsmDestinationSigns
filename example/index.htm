@@ -4,6 +4,8 @@
  <title>OSM Destination Signs</title>
  <link rel="stylesheet" type="text/css" href="../code/style.css">
  <script src="../code/scripts.js" type="text/javascript"></script>
+ <script src="../../destinations/code/svgclean.js" type="text/javascript"></script>
+
  <meta  charset="UTF-8"/>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
@@ -22,15 +24,18 @@
 <body class="mappage">
 <div id="header">
 <h1>Destination Signs</h1>
-<p><strong>This tool shows the content of relations with "type=destination_sign" and "direction_*" tags on guideposts.</strong>
+<p><strong>This tool shows the content of relations with "type=destination_sign", "direction_*" tags on 
+guideposts as well as "destination" tags on highways and guideposts.</strong>
 <br>Please enter an Id of an intersection node or a guidepost - or do it the simple way and select a marker from the map.
-<br>Click on the arrow to get to the corresponding OSM object.
+
 <br>The code is available on <a href="https://github.com/mueschel/OsmDestinationSigns">Github</a>.
 <div class="config">
 <h3>Configuration</h3>
-<div><form action="" onsubmit="getsign(document.getElementsByName('nodeid')[0].value); return false;">
+<div><form action="" >
   <label title="Id of an intersection or guidepost node">Node Id:
-    <input type="text" name="nodeid"></label>
+    <input type="text" name="nodeid"  onChange="updatelink('node');getsign(document.getElementsByName('nodeid')[0].value);"></label>
+  <br><label title="Id of a way with destination tags">Way Id:
+    <input type="text" name="wayid" onChange="updatelink('way');getsignway(document.getElementsByName('wayid')[0].value);"></label>
   <br><label title="Some Examples">Some (interesting) examples:
     <select name="nodeid" onChange="getsign(this.value);">
       <option value="3731895314">3731895314 - bi-lingual
@@ -59,7 +64,10 @@
       <option value="4554236964">4554236964 - with many from; time and distance
     </select></label>
     <div><input type="checkbox" name="namedroutes" checked="checked" onChange="updatelink()"> Add names of routes</input>
-    <br><input type="checkbox" name="fromarrow" checked="checked" onChange="updatelink()"> Show hollow arrows as seen from 'from' way</input>
+    <br><input type="checkbox" name="fromarrow" checked="checked" onChange="updatelink()"> Show hollow arrows as seen from sign</input>
+
+    <br><input type="checkbox" name="include_sgn" checked="checked" onChange="togglesigns();updatelink()"> destination_signs</input>
+    <br><input type="checkbox" name="include_way" checked="checked" onChange="toggleways();updatelink()"> Show 'destination' on ways</input>
     <br><a id="permanode" href="">Link to this node</a>
 </form>
 </div>
@@ -68,88 +76,245 @@
 <div style="margin-bottom:50px;margin-top:10px;clear:both;width:420px;height:1px;border-bottom:1px solid black;">
 <p><div id="map"></div>
 <div id="container">&nbsp;</div>
-<div id="key"><dl><dt>solid arrows<dd>cardinal direction<dt>hollow arrows<dd>direction as seen from 'from' way<dt>dotted arrow<dd>approximate direction</dl>
+<div id="key">
+<br><span style="font-size:220%">&#10137;</span> cardinal direction
+<br><span style="font-size:220%">&#x21e8;</span> direction as on sign
+<br><span style="font-size:220%">&#x21e2;</span> approximate direction
+<br><img src="../code/marker-icon.png" style="vertical-align:middle">destination_sign relation
+<br><img src="../code/marker-icon2.png" style="vertical-align:middle">direction_* tags
+<br><img src="../code/marker-icon3.png" style="vertical-align:middle">destination on nodes
+<br><img src="../code/marker-icon4.png" style="vertical-align:middle">destination on ways
+
 </div>
 
 </body>
 <script type="text/javascript">
-var map = L.map('map').setView([46.72539, 11.42286], 12);
+var endpoint = "http://overpass-api.de/api/interpreter";
+
+var currentType = 'node';
+var map = L.map('map').setView([46.72539, 11.42286], 14);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
 
+map.addControl(new L.Control.Permalink({text: 'Permalink'}));
+
+var hash = (location.hash ||'').replace(/^#/,'').split('&');
+var namedroutes = true;
+var fromarrow = false;
+var include_sgn = true;
+var include_way = true;
+var currentType = 'node';
+var node = 0;
+var way = 0;
+
+for(i=0; i<hash.length; i++ ){
+  var t = hash[i].split('=');
+  if (t[0]=='node') {
+    node = t[1];
+    currentType = 'node';
+    }
+  if (t[0]=='way') {
+    way = t[1];
+    currentType = 'way';
+    }
+  if (t[0]=="namedroutes"){
+    if ( t[1]==1 ) namedroutes = true;
+    if ( t[1]==0 ) namedroutes = false;
+    }
+  if (t[0]=="fromarrow"){
+    if ( t[1]==1 ) fromarrow = true;
+    if ( t[1]==0 ) fromarrow = false;
+    }
+  if (t[0]=="include_sgn"){
+    if ( t[1]==1 ) include_sgn = true;
+    if ( t[1]==0 ) include_sgn = false;
+    }
+  if (t[0]=="include_way"){
+    if ( t[1]==1 ) include_way = true;
+    if ( t[1]==0 ) include_way = false;
+    }
+  }
+  
+document.getElementsByName('namedroutes')[0].checked = namedroutes;
+document.getElementsByName('fromarrow')[0].checked = fromarrow;
+document.getElementsByName('include_sgn')[0].checked = include_sgn;
+document.getElementsByName('include_way')[0].checked = include_way;
+
+if(node) {     getsign(node); } 
+if(way)  {     getsignway(way); } 
+
+ 
+var waylayer; var signlayer;
+if (document.getElementsByName("include_sgn")[0].checked)  
+  addsigns();
+  
+if (document.getElementsByName("include_way")[0].checked)  
+  addways();
+     
+    
+function togglesigns() {
+  if (document.getElementsByName("include_sgn")[0].checked == 0)
+    map.removeLayer(signlayer);
+  else
+    addsigns();
+  }
+    
+function toggleways() {
+  if (document.getElementsByName("include_way")[0].checked == 0)
+    map.removeLayer(waylayer);
+  else
+    addways();
+  }
+
+function addsigns() {
+  signlayer = L.layerGroup();  
+  map.addLayer(signlayer);
 L.layerJSON({
-  url: 'http://overpass-api.de/api/interpreter?data=\
-  [out:json];\
+  url: endpoint+'?data=\
+  [out:json][maxsize:4073741824];\
 relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.a;\
 node(r.a:"sign")->.b;\
-.b out;\
+.b out ;\
 \
 rel(bn.b)["type"="destination_sign"]->.c;\
 (.a; - .c;)->.d;\
 node(r.d:"intersection")->.e;\
-.e out;\
+.e out ;\
 \
 node[information=guidepost][~"^direction_"~".*"]({lat1},{lon1},{lat2},{lon2})->.f;\
 (.f; - .b;)->.g;\
-.g out;\
+.g out ;\
+node[information=guidepost][destination]({lat1},{lon1},{lat2},{lon2})->.f;\
+(.f; - .b;)->.g;\
+.g out ;\
+\
 ',
   propertyItems: 'elements',
   propertyTitle: 'tags.name',
   propertyLoc: ['lat','lon'],
   minShift: 100,
-  minZoom: 9,
+  minZoom: 11,
   attribution: "POI data from overpass API under ODbL",
   updateOutBounds: false,
   buildIcon: function(data, title) {
-    return new L.Icon({
-      iconUrl:'../code/marker-icon.png',
-      iconSize: new L.Point(25, 41),
-      iconAnchor: new L.Point(12, 41),
-      popupAnchor: new L.Point(0, -41)
-    })
+    if(data.tags && 
+       Object.keys(data.tags).some(function(k){ return ~k.indexOf("direction_") })
+       ) {
+      return new L.Icon({
+        iconUrl:'../code/marker-icon2.png',
+        iconSize: new L.Point(25, 41),
+        iconAnchor: new L.Point(12, 41),
+        popupAnchor: new L.Point(0, -41)
+        })
+      }
+    else if(data.tags && 
+            data.tags.hasOwnProperty("destination") && 
+            data.tags.hasOwnProperty("information")) {
+      return new L.Icon({
+        iconUrl:'../code/marker-icon3.png',
+        iconSize: new L.Point(25, 41),
+        iconAnchor: new L.Point(12, 41),
+        popupAnchor: new L.Point(0, -41)
+        })
+      }  
+    else {
+      return new L.Icon({
+        iconUrl:'../code/marker-icon.png',
+        iconSize: new L.Point(25, 41),
+        iconAnchor: new L.Point(12, 41),
+        popupAnchor: new L.Point(0, -41)
+        })
+      }
+
   },
   buildPopup: function(data, marker) {
     marker.on('click',function(d) {getsign(d.target.options.id);});
-    o = 'Waypost <a href="https://osm.org/node/'+data.id+'">'+data.id+'</a><br>';
+    o = 'Node <a href="https://osm.org/node/'+data.id+'">'+data.id+'</a><br>';
     for (var k in data.tags) {
       if (data.tags.hasOwnProperty(k)) {
-        o += k+" = "+data.tags[k]+"<br>";
+        o += "<b>"+k+"</b> = "+data.tags[k]+"<br>";
         }
       }
     return o;
     }
   })
-
-  .addTo(map);
-  var marker;
-
-map.addControl(new L.Control.Permalink({text: 'Permalink'}));
-
-var hash = (location.hash ||'').replace(/^#/,'').split('&');
-var namedroutes = false;
-var fromarrow = false;
-var node = 0;
-for(i=0; i<hash.length; i++ ){
-  var t = hash[i].split('=');
-  if (t[0]=='node') {
-    node = t[1];
-    }
-  if (t[0]=="namedroutes"){
-    namedroutes = true;
-    }
-  if (t[0]=="fromarrow"){
-    fromarrow = true;
-    }
+  .addTo(signlayer);  
+  
   }
-  if (hash[0]){
-    document.getElementsByName('namedroutes')[0].checked = namedroutes;
-    document.getElementsByName('fromarrow')[0].checked = fromarrow;
-    }
-  if(node) {
-    getsign(node);
-    } 
+  
+function addways() {
+  waylayer = L.layerGroup();  
+  map.addLayer(waylayer);
+  
+  L.layerJSON({
+    url: endpoint+'?data=\
+    [out:json];\
+  way[highway][~"^destination"~"."]({lat1},{lon1},{lat2},{lon2});\
+  out tags center 1000;\
+  ',
+    propertyItems: 'elements',
+    propertyTitle: 'tags.name',
+    propertyLoc: ['center.lat','center.lon'],
+    minShift: 100,
+    minZoom: 11,
+    attribution: "POI data from overpass API under ODbL",
+    updateOutBounds: false,
+    buildIcon: function(data, title) {
+      if(data.tags && 
+       (Object.keys(data.tags).some(function(k){ return ~k.indexOf(":lanes")}) ||
+       Object.keys(data.tags).some(function(k){ return ~k.indexOf("turn")}))
+       ) {
+        return new L.Icon({
+          iconUrl:'../code/marker-icon4.png',
+          iconSize: new L.Point(25, 41),
+          iconAnchor: new L.Point(12, 41),
+          popupAnchor: new L.Point(0, -41)
+          })       
+        }
+      else { 
+        return new L.Icon({
+          iconUrl:'../code/marker-icon5.png',
+          iconSize: new L.Point(25, 41),
+          iconAnchor: new L.Point(12, 41),
+          popupAnchor: new L.Point(0, -41)
+          })
+        }
+      },
 
+    buildPopup: function(data, marker) {
+      marker.on('click',function(d) {getsvgsign(d.target.options);});
+      o = 'Way <a href="https://osm.org/way/'+data.id+'">'+data.id+'</a><br>';
+      for (var k in data.tags) {
+        if (data.tags.hasOwnProperty(k)) {
+          o += "<b>"+k+"</b> = "+data.tags[k]+"<br>";
+          }
+        }
+      return o;
+      }
+    })
+
+    .addTo(waylayer);  
+  }
+  
+function getsignway(way) {
+  var url = endpoint;
+  var data = "data=[out:json];way("+way+");out center;";
+  getData(url,'',getwaymove,data);
+}
+
+function getwaymove(e) {
+  try {
+    data = JSON.parse(e);
+//     map.panTo(new L.LatLng(data.elements[0].center.lat, data.elements[0].center.lon));
+    map.setView([data.elements[0].center.lat, data.elements[0].center.lon], 16);
+    loaddata_i(data.elements[0]);
+    }
+  catch {};
+  }
+
+  
+  
 </script>
 
 </html>

@@ -33,14 +33,15 @@ div.config {
   border: 1px solid #aaa;
   margin: 2px;
   padding: 2px;
-  z-index: 1; }
+  z-index: 10; }
   div.config div {
     width: 300px;
     float: left; }
 
 div#container {
   padding-top: 20px;
-  z-index: 1; }
+  position:relative;
+  z-index: 0; }
 
 .simplepage #map {
   position: fixed;

@@ -1,4 +1,4 @@
-function getData(command,dId,callback) {
+function getData(command,dId,callback,data="") {
   
   var xmlhttp = null;
   var cb = null;
@@ -6,6 +6,7 @@ function getData(command,dId,callback) {
   cb = callback;
   var destId = dId;
   var cmd = command;
+  var dat = data;
   
   xmlhttp.onreadystatechange = function() {
     if(xmlhttp.readyState == 4) {
@@ -17,9 +18,14 @@ function getData(command,dId,callback) {
         }
       }
     }
-
-  xmlhttp.open("GET",command,1);
-  xmlhttp.send(null);
+  if(dat=="") {
+    xmlhttp.open("GET",command,1);
+    xmlhttp.send(null);
+    }
+  else {
+    xmlhttp.open("POST",command,1);
+    xmlhttp.send(dat);
+    }
   }  
 
   
@@ -44,8 +50,26 @@ function updatemap(d) {
   catch (e) {
     document.getElementById('container').innerHTML = "<h3>Error / Debugging</h3>"+ d;
     }
-  
 }
+
+function showdata(d) {
+  var data;
+  try {
+    data = JSON.parse(d);
+    
+    document.getElementById('container').innerHTML = "";
+    if (data) {
+      document.getElementById('container').innerHTML = data;
+      }
+//     if(data.html) {  
+//       document.getElementById('container').innerHTML += data.html;
+//       }
+    } 
+  catch (e) {
+    document.getElementById('container').innerHTML = d;
+    }
+  if(cleanup) {cleanup();}
+  }
   
   
 function getsign(node) {
@@ -55,18 +79,45 @@ function getsign(node) {
   
   url += 'nodeid='+node+namedroutes+fromarrow;
   getData(url,'',updatemap);
-  document.getElementById("permanode").href = '#node='+node+namedroutes+fromarrow;
   document.getElementsByName("nodeid")[0].value = node;
+  updatelink('node');
   document.getElementById('container').innerHTML = "<h3>Loading...</h3>";
   }
 
+function getsvgsign(d) {  
+  loaddata_i(d);
+  }  
+  
+function loaddata_i(mydata) {
+  var url = '../../destinations/code/generate.pl';
+  
+  mydata.direction = 0;
+  mydata.country = "DE";
+  mydatastr = JSON.stringify(mydata);
+  getData(url,'',showdata,mydatastr);
+  
+  document.getElementsByName('wayid')[0].value = mydata.id;
+  updatelink('way');
+  document.getElementById('container').innerHTML = "<h3>Loading...</h3>";
+  }  
+  
+  
 function showObj(t,i) {
   window.open("https://osm.org/"+t+"/"+i);
 }
 
-function updatelink() {
+function updatelink(t) {
+  if(t) {currentType=t;}
   var node = document.getElementsByName("nodeid")[0].value;
-  var namedroutes = document.getElementsByName('namedroutes')[0].checked?'&namedroutes':'';
-  var fromarrow = document.getElementsByName('fromarrow')[0].checked?'&fromarrow':'';
-  document.getElementById("permanode").href = '#node='+node+namedroutes+fromarrow;
+  var way  = document.getElementsByName("wayid")[0].value;
+  var namedroutes = document.getElementsByName('namedroutes')[0].checked?'&namedroutes=1':'namedroutes=0';
+  var fromarrow = document.getElementsByName('fromarrow')[0].checked?'&fromarrow=1':'fromarrow=0';
+  var include_sgn = document.getElementsByName('include_sgn')[0].checked?'&include_sgn=1':'&include_sgn=0';
+  var include_way = document.getElementsByName('include_way')[0].checked?'&include_way=1':'&include_way=0';
+  if(currentType == "way") {
+    document.getElementById("permanode").href = '#way='+way+namedroutes+fromarrow+include_sgn+include_way;
+    }
+  else  {
+    document.getElementById("permanode").href = '#node='+node+namedroutes+fromarrow+include_sgn+include_way;
+    }
   }
