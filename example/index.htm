@@ -63,14 +63,15 @@ guideposts as well as "destination" tags on highways and guideposts.</strong>
       <option value="275664964">275664964 - with various from's
       <option value="4554236964">4554236964 - with many from; time and distance
     </select></label>
-    <div><input type="checkbox" name="namedroutes" checked="checked" onChange="updatelink()"> Add names of routes</input>
+    Country <select name="country" onChange="updatelink()"><option value="DE">Germany<option value="AT">Austria<option value="IT">Italy</select><br> 
+
+    <input type="checkbox" name="namedroutes" checked="checked" onChange="updatelink()"> Add names of routes</input>
     <br><input type="checkbox" name="fromarrow" checked="checked" onChange="updatelink()"> Show hollow arrows as seen from sign</input>
 
     <br><input type="checkbox" name="include_sgn" checked="checked" onChange="togglesigns();updatelink()"> destination_signs</input>
     <br><input type="checkbox" name="include_way" checked="checked" onChange="toggleways();updatelink()"> Show 'destination' on ways</input>
     <br><a id="permanode" href="">Link to this node</a>
 </form>
-</div>
 </div>
 </div>
 <div style="margin-bottom:50px;margin-top:10px;clear:both;width:420px;height:1px;border-bottom:1px solid black;">
@@ -89,7 +90,9 @@ guideposts as well as "destination" tags on highways and guideposts.</strong>
 
 </body>
 <script type="text/javascript">
-var endpoint = "http://overpass-api.de/api/interpreter";
+//var endpoint = "http://overpass-api.de/api/interpreter";
+//var endpoint = "https://overpass.kumi.systems/api/interpreter";
+var endpoint = "https://osm.mueschelsoft.de/overpass/";
 
 var currentType = 'node';
 var map = L.map('map').setView([46.72539, 11.42286], 14);
@@ -105,6 +108,7 @@ var fromarrow = false;
 var include_sgn = true;
 var include_way = true;
 var currentType = 'node';
+var country = '';
 var node = 0;
 var way = 0;
 
@@ -117,6 +121,9 @@ for(i=0; i<hash.length; i++ ){
   if (t[0]=='way') {
     way = t[1];
     currentType = 'way';
+    }
+  if (t[0]=='country') {
+    country = t[1];
     }
   if (t[0]=="namedroutes"){
     if ( t[1]==1 ) namedroutes = true;
@@ -140,6 +147,8 @@ document.getElementsByName('namedroutes')[0].checked = namedroutes;
 document.getElementsByName('fromarrow')[0].checked = fromarrow;
 document.getElementsByName('include_sgn')[0].checked = include_sgn;
 document.getElementsByName('include_way')[0].checked = include_way;
+document.getElementsByName('country')[0].value = country;
+
 
 if(node) {     getsign(node); } 
 if(way)  {     getsignway(way); } 

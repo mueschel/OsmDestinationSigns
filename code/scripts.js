@@ -92,7 +92,8 @@ function loaddata_i(mydata) {
   var url = '../../destinations/code/generate.pl';
   
   mydata.direction = 0;
-  mydata.country = "DE";
+  mydata.country = document.getElementsByName("country")[0].value;
+
   mydatastr = JSON.stringify(mydata);
   getData(url,'',showdata,mydatastr);
   
@@ -114,10 +115,12 @@ function updatelink(t) {
   var fromarrow = document.getElementsByName('fromarrow')[0].checked?'&fromarrow=1':'fromarrow=0';
   var include_sgn = document.getElementsByName('include_sgn')[0].checked?'&include_sgn=1':'&include_sgn=0';
   var include_way = document.getElementsByName('include_way')[0].checked?'&include_way=1':'&include_way=0';
+  var country = "&country="+document.getElementsByName("country")[0].value;
+  
   if(currentType == "way") {
-    document.getElementById("permanode").href = '#way='+way+namedroutes+fromarrow+include_sgn+include_way;
+    document.getElementById("permanode").href = '#way='+way+namedroutes+fromarrow+include_sgn+include_way+country;
     }
   else  {
-    document.getElementById("permanode").href = '#node='+node+namedroutes+fromarrow+include_sgn+include_way;
+    document.getElementById("permanode").href = '#node='+node+namedroutes+fromarrow+include_sgn+include_way+country;
     }
   }
