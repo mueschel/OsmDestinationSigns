@@ -266,6 +266,22 @@ sub getNamedWay {
     }
   return $o;  
   }
+
+sub getSymboledWay {
+  my ($s) = @_;
+  my @o;
+  foreach my $r (keys %{$db->{relation}}) { 
+    if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
+        grep(/^$db->{relation}{$r}{'tags'}{'route'}$/, qw(foot mtb hiking bicycle horse))) {
+      if (isRelationMember('way',$s->{to},$r)) { 
+        if ($db->{relation}{$r}{'tags'}{'osmc:symbol'}) {
+          push(@o,$db->{relation}{$r}{'tags'}{'osmc:symbol'});
+          }
+        }
+      }
+    }
+  return \@o;  
+  }  
   
 #Take destination string, add destination:lang:XX (if not already in string)
 sub DestinationString {
@@ -525,6 +541,7 @@ sub parseData {
       foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
         $s->{deststring} = DestinationString($s,$w,$i);
         $s->{wayname} = getNamedWay($s);
+        $s->{waysymbol} = getSymboledWay($s);
         $s->{wayref}  = getRef($s, $i);
     
         $s->{duration} = getTime($w,$i);
@@ -571,6 +588,17 @@ sub parseData {
           
           $o .= "<div class=\"dura\">$s->{duration}$s->{distance}</div>";
           $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
+          if ($db->{relation}{$w}{'tags'}{'osmc:symbol'}) {
+            my $osmc = $db->{relation}{$w}{'tags'}{'osmc:symbol'};
+            $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$osmc."&opt=rectborder&size=32&out=svg\"></div>";
+            }
+          elsif($s->{waysymbol} && scalar @{$s->{waysymbol}}) {
+            $o .= "<div class=\"symbol\">";
+            foreach my $osmc (@{$s->{waysymbol}}) {
+              $o .= "<img src=\"../../osmc/generate.pl?osmc=".$osmc."&opt=rectborder&size=32&out=svg\">";            
+              }
+            $o .= "</div>";  
+            }
           $o .= "</div>";
 
           my $order = $s->{dir}.$i.$s->{deststring}.$w;
@@ -611,6 +639,10 @@ sub parseData {
         $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e2;</div>";
         $o .= '</div>';  
         $o .= "<div class=\"dest\">$s->{deststring}</div>";
+        if ($db->{node}{$sign}{'tags'}{'osmc:symbol'}) {
+          my $osmc = $db->{node}{$sign}{'tags'}{'osmc:symbol'};
+          $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$osmc."&opt=rectborder&size=32&out=svg\"></div>";
+          }        
         $o .= "</div>";
         push(@$d,dclone $s);
         $entries->{'all'}{$s->{dir}.$i.' '.$s->{deststring}} = $o;
