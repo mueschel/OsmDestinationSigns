@@ -48,7 +48,7 @@ sub readData {
   if ($input =~ /^[0-9]+$/ ) {
     my $url = 'http://overpass-api.de/api/interpreter';
 #     if($fast) {
-      $url = 'http://cerberus.x-matter.uni-frankfurt.de:45680/api/interpreter';
+      $url = 'http://osm.mueschelsoft.de/overpass/';
 #       }
     if (-e "../data/$input.json") {
       $url = "http://osm.mueschelsoft.de/destinationsign/data/$input.json";
