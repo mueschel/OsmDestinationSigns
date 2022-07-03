@@ -111,8 +111,8 @@ function updatelink(t) {
   if(t) {currentType=t;}
   var node = document.getElementsByName("nodeid")[0].value;
   var way  = document.getElementsByName("wayid")[0].value;
-  var namedroutes = document.getElementsByName('namedroutes')[0].checked?'&namedroutes=1':'namedroutes=0';
-  var fromarrow = document.getElementsByName('fromarrow')[0].checked?'&fromarrow=1':'fromarrow=0';
+  var namedroutes = document.getElementsByName('namedroutes')[0].checked?'&namedroutes=1':'&namedroutes=0';
+  var fromarrow = document.getElementsByName('fromarrow')[0].checked?'&fromarrow=1':'&fromarrow=0';
   var include_sgn = document.getElementsByName('include_sgn')[0].checked?'&include_sgn=1':'&include_sgn=0';
   var include_way = document.getElementsByName('include_way')[0].checked?'&include_way=1':'&include_way=0';
   var country = "&country="+document.getElementsByName("country")[0].value;

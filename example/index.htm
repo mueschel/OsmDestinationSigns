@@ -63,7 +63,7 @@ guideposts as well as "destination" tags on highways and guideposts.</strong>
       <option value="275664964">275664964 - with various from's
       <option value="4554236964">4554236964 - with many from; time and distance
     </select></label>
-    Country <select name="country" onChange="updatelink()"><option value="DE">Germany<option value="AT">Austria<option value="IT">Italy<option value="PT">Portugal</select><br> 
+    Country <select name="country" onChange="updatelink()"><option value="DE">Germany<option value="AT">Austria<option value="FR">France<option value="IT">Italy<option value="PT">Portugal<option value="SR">Serbia</select><br> 
 
     <input type="checkbox" name="namedroutes" checked="checked" onChange="updatelink()"> Add names of routes</input>
     <br><input type="checkbox" name="fromarrow" checked="checked" onChange="updatelink()"> Show hollow arrows as seen from sign</input>
@@ -182,26 +182,39 @@ function addsigns() {
 L.layerJSON({
   url: endpoint+'?data=\
   [out:json][maxsize:4073741824];\
-relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.a;\
-node(r.a:"sign")->.b;\
-.b out ;\
-\
-rel(bn.b)["type"="destination_sign"]->.c;\
-(.a; - .c;)->.d;\
-node(r.d:"intersection")->.e;\
-.e out ;\
-\
+relation["type"="destination_sign"]({lat1},{lon1},{lat2},{lon2})->.all;\
+node(r.all:"sign")->.signs;\
+.signs out ;\
+rel(bn.signs)["type"="destination_sign"]->.c;\
+(.all; - .c;)->.all;\
+node(r.all:"intersection")->.sects;\
+.sects out ;\
+rel(bn.sects)["type"="destination_sign"]->.c;\
+(.all; - .c;)->.all;\
+node(r.all:"via")->.via;\
+.via out ;\
+rel(bn.via)["type"="destination_sign"]->.c;\
+(.all; - .c;)->.all;\
+.all out center;\
 node[information=guidepost][~"^direction_"~".*"]({lat1},{lon1},{lat2},{lon2})->.f;\
-(.f; - .b;)->.g;\
+(.f; - .signs;)->.g;\
 .g out ;\
 node[information=guidepost][destination]({lat1},{lon1},{lat2},{lon2})->.f;\
-(.f; - .b;)->.g;\
+(.f; - .signs;)->.g;\
 .g out ;\
-\
 ',
   propertyItems: 'elements',
   propertyTitle: 'tags.name',
   propertyLoc: ['lat','lon'],
+  filterData: function(d) {
+    for (var k in d.elements) {
+      if(d.elements[k].center) {
+        d.elements[k].lat = d.elements[k].center.lat;
+        d.elements[k].lon = d.elements[k].center.lon;
+        }
+      }
+    return d;  
+    },
   minShift: 100,
   minZoom: 11,
   attribution: "POI data from overpass API under ODbL",
@@ -227,6 +240,14 @@ node[information=guidepost][destination]({lat1},{lon1},{lat2},{lon2})->.f;\
         popupAnchor: new L.Point(0, -41)
         })
       }  
+    else if(data.center) {
+      return new L.Icon({
+        iconUrl:'../code/marker-icon6.png',
+        iconSize: new L.Point(25, 41),
+        iconAnchor: new L.Point(12, 41),
+        popupAnchor: new L.Point(0, -41)
+        })
+      }        
     else {
       return new L.Icon({
         iconUrl:'../code/marker-icon.png',
@@ -238,11 +259,16 @@ node[information=guidepost][destination]({lat1},{lon1},{lat2},{lon2})->.f;\
 
   },
   buildPopup: function(data, marker) {
-    marker.on('click',function(d) {getsign(d.target.options.id);});
-    o = 'Node <a href="https://osm.org/node/'+data.id+'">'+data.id+'</a><br>';
-    for (var k in data.tags) {
-      if (data.tags.hasOwnProperty(k)) {
-        o += "<b>"+k+"</b> = "+data.tags[k]+"<br>";
+    if(data.center) {
+      o = '<b>Problematic relation <a href="https://osm.org/relation/'+data.id+'">'+data.id+'</a></b>';
+      }
+    else {
+      marker.on('click',function(d) {getsign(d.target.options.id);});
+      o = 'Node <a href="https://osm.org/node/'+data.id+'">'+data.id+'</a><br>';
+      for (var k in data.tags) {
+        if (data.tags.hasOwnProperty(k)) {
+          o += "<b>"+k+"</b> = "+data.tags[k]+"<br>";
+          }
         }
       }
     return o;
