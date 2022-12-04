@@ -6,83 +6,123 @@ div.entry {
   vertical-align: middle;
   position: relative;
   overflow: hidden;
-  display: table; }
-  div.entry div.entry div.b {
-    position: relative;
-    width: 100%;
-    height: 100%; }
-  div.entry div.compass {
-    font-size: 40px;
-    width: 40px;
-    cursor: pointer;
-    text-align: center;
-    display: table-cell;
-    vertical-align: middle; }
-  div.entry div.dest {
-    font-size: 16px;
-    width: 250px;
-    margin: auto 8px;
-    height: 100%;
-    display: table-cell;
-    vertical-align: middle; }
-  div.entry div.dest span {
-    font-size: 80%; }
-  div.entry div.ref {
-    width: 30px;
-    display: table-cell;
-    vertical-align: middle; }
-  div.entry div.symbol {
-    position: absolute;
-    height: 30px;
-    top: 3px;
-    right: 5px; }
-  div.entry div.symbol div {
-    background-size: 25px;
-    background-repeat: no-repeat;
-    background-position: center center;
-    display: inline-block;
-    width: 25px;
-    height: 25px;
-    margin: 0;
-    padding: 0; }
-  div.entry div.industrial {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/4e/RWB_Industriegebiet.svg"); }
-  div.entry div.park_and_ride {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/94/Sinnbild_P-R.svg"); }
-  div.entry div.parking {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/0/0f/UK_traffic_sign_801.svg"); }
-  div.entry div.fuel {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/d/d3/Zeichen_361-50.svg"); }
-  div.entry div.stadium {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/f/fb/Stadium_icon.svg"); }
-  div.entry div.airport {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/5/51/Italian_traffic_signs_-_icona_aeroporto.svg"); }
-  div.entry div.restaurant {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/4d/Zeichen_376.svg"); }
-  div.entry div.toilets {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/d/d7/Zeichen_378.svg"); }
-  div.entry div.motorway, div.entry div.highway {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/2a/Zeichen_330_-_Autobahn%2C_StVO_1992.svg"); }
-  div.entry div.hospital {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/94/RWB_Krankenhaus.svg"); }
-  div.entry div.train_station {
-    background-color: white;
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/3/33/Fernbahn_Signet_HVV.svg"); }
-  div.entry div.ferry {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/92/Ferry.png"); }
-  div.entry div.centre {
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/2a/Italian_traffic_signs_-_icona_centro.svg"); }
-  div.entry div.interchange {
-    background-image:url("https://upload.wikimedia.org/wikipedia/commons/d/d4/RWBA_Autobahnkreuz_oder_-dreieck.svg") ;  }
-  div.entry div.swimming_hall {
-    background-image:url("https://upload.wikimedia.org/wikipedia/commons/f/fe/Hallenbad-Schild.svg") ;  }
-  div.entry div.info {
-    background-image:url("https://upload.wikimedia.org/wikipedia/commons/5/56/Zeichen_365-61_-_Informationsstelle%2C_StVO_2013.svg") ;}    
-  div.entry div.dura {
-    position: absolute;
-    right: 5px;
-    bottom: 2px;
-    line-height: normal; }
+  display: table;
+}
+div.entry div.entry div.b {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+div.entry div.compass {
+  font-size: 40px;
+  width: 40px;
+  cursor: pointer;
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+}
+div.entry div.dest {
+  font-size: 16px;
+  width: 250px;
+  margin: auto 8px;
+  height: 100%;
+  display: table-cell;
+  vertical-align: middle;
+}
+div.entry div.dest span {
+  font-size: 80%;
+}
+div.entry div.ref {
+  width: 30px;
+  display: table-cell;
+  vertical-align: middle;
+}
+div.entry div.symbol {
+  position: absolute;
+  height: 30px;
+  top: 3px;
+  right: 5px;
+}
+div.entry div.symbol div {
+  background-size: 25px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  margin: 0;
+  padding: 0;
+}
+div.entry div.industrial {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/4e/RWB_Industriegebiet.svg");
+}
+div.entry div.park_and_ride {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/94/Sinnbild_P-R.svg");
+}
+div.entry div.parking {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/0/0f/UK_traffic_sign_801.svg");
+}
+div.entry div.fuel {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/d/d3/Zeichen_361-50.svg");
+}
+div.entry div.stadium {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/f/fb/Stadium_icon.svg");
+}
+div.entry div.airport {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/5/51/Italian_traffic_signs_-_icona_aeroporto.svg");
+}
+div.entry div.restaurant {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/4d/Zeichen_376.svg");
+}
+div.entry div.toilets {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/d/d7/Zeichen_378.svg");
+}
+div.entry div.motorway, div.entry div.highway {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/2a/Zeichen_330_-_Autobahn%2C_StVO_1992.svg");
+}
+div.entry div.hospital {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/94/RWB_Krankenhaus.svg");
+}
+div.entry div.train_station {
+  background-color: white;
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/3/33/Fernbahn_Signet_HVV.svg");
+}
+div.entry div.ferry {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/9/92/Ferry.png");
+}
+div.entry div.centre {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/2/2a/Italian_traffic_signs_-_icona_centro.svg");
+}
+div.entry div.interchange {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/d/d4/RWBA_Autobahnkreuz_oder_-dreieck.svg");
+}
+div.entry div.swimming_hall {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/f/fe/Hallenbad-Schild.svg");
+}
+div.entry div.info {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/5/56/Zeichen_365-61_-_Informationsstelle%2C_StVO_2013.svg");
+}
+div.entry div.bus {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/6/66/Sinnbild_Kraftomnibus.svg");
+}
+div.entry div.bicycle {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/c/c1/Sinnbild_Radfahrer%2C_StVO_1992.svg");
+}
+div.entry div.hiking {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/f/f8/Sinnbild_Fu%C3%9Fg%C3%A4nger.svg");
+}
+div.entry div.horse {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/c/c0/Sinnbild_Reiter%2C_StVO_1992.svg");
+}
+div.entry div.church {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/e/e1/Sinnbild_Kirche_-_Richtlinien_f%C3%BCr_die_touristische_Beschilderung%2C_Ausgabe_2008.svg");
+}
+div.entry div.dura {
+  position: absolute;
+  right: 5px;
+  bottom: 2px;
+  line-height: normal;
+}
 
 div.details {
   background: white;
@@ -90,8 +130,10 @@ div.details {
   width: 400px;
   margin-top: 5px;
   text-align: right;
-  padding: 5px; }
-  div.details span {
-    display: block; }
+  padding: 5px;
+}
+div.details span {
+  display: block;
+}
 
 /*# sourceMappingURL=style.css.map */

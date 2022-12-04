@@ -251,7 +251,7 @@ sub searchIntersection {
 #TODO get name if 'to' is node of way belonging to named route
 sub getNamedWay {
   my ($s) = @_;
-  my $o;
+  my $o; my $refed_o;
   foreach my $r (keys %{$db->{relation}}) { 
     if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
         grep(/^$db->{relation}{$r}{'tags'}{'route'}$/, qw(foot mtb hiking bicycle horse))) {
@@ -260,16 +260,21 @@ sub getNamedWay {
             $db->{relation}{$r}{'tags'}{'name'} ne $db->{relation}{$r}{'tags'}{'ref'}) {
           $o .= '<br>' if $o;
           $o .= $db->{relation}{$r}{'tags'}{'name'};
+          if ($db->{relation}{$r}{'tags'}{'ref'} eq $s->{wayref} && $db->{relation}{$s->{id}}{'tags'}{'destination:ref'}) {
+            $refed_o .= '<br>' if $refed_o;
+            $refed_o .= $db->{relation}{$r}{'tags'}{'name'};
+            }
           }
         }
       }
     }
-  return $o;  
+  return $refed_o//$o;  
   }
 
 sub getSymboledWay {
   my ($s) = @_;
-  my @o;
+  my @o; my @refed_o;
+  my $found_match = 0;
   foreach my $r (keys %{$db->{relation}}) { 
     if ($db->{relation}{$r}{'tags'}{'type'} eq 'route' &&
         grep(/^$db->{relation}{$r}{'tags'}{'route'}$/, qw(foot mtb hiking bicycle horse))) {
@@ -277,9 +282,16 @@ sub getSymboledWay {
         if ($db->{relation}{$r}{'tags'}{'osmc:symbol'}) {
           push(@o,$db->{relation}{$r}{'tags'}{'osmc:symbol'});
           }
+        if ($db->{relation}{$r}{'tags'}{'ref'} eq $db->{relation}{$s->{id}}{'tags'}{'destination:ref'}) {
+          $found_match = 1;
+          if ($db->{relation}{$r}{'tags'}{'osmc:symbol'}) {
+            push(@refed_o,$db->{relation}{$r}{'tags'}{'osmc:symbol'});
+            }
+          }
         }
       }
     }
+  return \@refed_o if $found_match ;
   return \@o;  
   }  
   
@@ -486,7 +498,35 @@ sub encodeValues {
   $s->{wayname}    = encodeDespiteBR($s->{wayname});  
   
   }
-   
+
+  
+sub mergeNumberedKeys {
+  my($hash,$key) = @_;
+  my $values;
+  $values->[0]{dests} = $hash->{$key} if defined $hash->{$key};
+  foreach my $k (sort keys %{$hash}) {
+    if ($k =~ /^$key:([0-9]+)$/) {
+      $values->[$1]{dests} = $hash->{$k};
+      }
+    }
+  my $keysymbol = $key . ":symbol";  
+  $values->[0]{symbols} = $hash->{$keysymbol} if defined $hash->{$keysymbol};
+  foreach my $k (sort keys %{$hash}) {
+    if ($k =~ /^$keysymbol:([0-9]+)$/) {
+      $values->[$1]{symbols} = $hash->{$k};
+      }
+    }
+#   $keysymbol = $key . ":osmc:symbol";  
+#   $values->[0]{osmcs} = $hash->{$keysymbol} if defined $hash->{$keysymbol};
+#   foreach my $k (sort keys %{$hash}) {
+#     if ($k =~ /^$keysymbol:([0-9]+)$/) {
+#       $values->[$1]{osmcs} = $hash->{$k};
+#       }
+#     }
+# #   print Dumper $values;  
+  return $values;  
+  }
+  
 #################################################
 ## Read & Display information from relations
 #################################################  
@@ -540,9 +580,9 @@ sub parseData {
       
       foreach my $i (0..(scalar split(';',$db->{relation}{$w}{'tags'}{destination})-1)) {
         $s->{deststring} = DestinationString($s,$w,$i);
+        $s->{wayref}  = getRef($s, $i);
         $s->{wayname} = getNamedWay($s);
         $s->{waysymbol} = getSymboledWay($s);
-        $s->{wayref}  = getRef($s, $i);
     
         $s->{duration} = getTime($w,$i);
         $s->{distance} = getDistance($w,$i);
@@ -622,35 +662,51 @@ sub parseData {
     foreach my $ke (qw(direction_east direction_northeast direction_north direction_northwest direction_west direction_southwest direction_south direction_southeast)) {
       my $key = $ke;
       $dir -= 45;
-      next unless defined $db->{node}{$sign}{'tags'}{$key};
+      my $values = mergeNumberedKeys($db->{node}{$sign}{'tags'},$key);
+      next unless defined $values;
       
-      my @dests = split(/;/,$db->{node}{$sign}{'tags'}{$key});      
-      if (scalar @dests == 1) {
-        @dests = split(/,/,$db->{node}{$sign}{'tags'}{$key});      
-        }
-      for my $i (0 .. scalar @dests -1) {
-        my $s;
-        $s->{dir} = $dir;
-        $s->{deststring} = $dests[$i];
-        cleanValues($s);
-        $o = "<div class=\"entry\">";
-        $o .= "<div class=\"compass\"";
-        $o .= "onClick=\"showObj('node',".$sign.")\">";
-        $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e2;</div>";
-        $o .= '</div>';  
-        $o .= "<div class=\"dest\">$s->{deststring}</div>";
-        if ($db->{node}{$sign}{'tags'}{'osmc:symbol'}) {
-          my $osmc = $db->{node}{$sign}{'tags'}{'osmc:symbol'};
-          $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$osmc."&opt=rectborder&size=32&out=svg\"></div>";
-          }        
-        $o .= "</div>";
-        push(@$d,dclone $s);
-        $entries->{'all'}{$s->{dir}.$i.' '.$s->{deststring}} = $o;
+      foreach my $vals (@{$values}) {
+        my @dests = split(/;/,$vals->{dests},-1);      
+        if (scalar @dests == 1) {
+          @dests = split(/[;,]/,$vals->{dests},-1);      
+          }
+        my @symbols = split(/;/,$vals->{symbols},-1);      
+ 
+        for my $i (0 .. scalar @dests -1) {
+          my $s;
+          $s->{dir} = $dir;
+          $s->{deststring} = $dests[$i];
+          cleanValues($s);
+          $o = "<div class=\"entry\">";
+          $o .= "<div class=\"compass\"";
+          $o .= "onClick=\"showObj('node',".$sign.")\">";
+          $o .= "<div style=\"transform: rotate($s->{dir}deg);\">&#x21e2;</div>";
+          $o .= '</div>';  
+          $o .= "<div class=\"dest\">$s->{deststring}</div>";
+          if ($db->{node}{$sign}{'tags'}{'osmc:symbol'}) {
+            my $osmc = $db->{node}{$sign}{'tags'}{'osmc:symbol'};
+            $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$osmc."&opt=rectborder&size=32&out=svg\"></div>";
+            }
+          if ((defined $symbols[$i] && (scalar @symbols == scalar @dests)) ||
+              (defined $symbols[0]  && (scalar @symbols != scalar @dests))) {
+            my $symb = $symbols[$i];
+               $symb = $symbols[0] if  (scalar @symbols != scalar @dests);
+            if ($symb =~ /:.*:.*:/) {
+              $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$symb."&opt=rectborder&size=32&out=svg\"></div>";
+              }
+            elsif ($symb =~ /^[a-z_]+$/) {
+              $o .= "<div class=\"symbol\"><div class=\"$symb\">&nbsp;</div></div>";
+              }
+            }        
+          $o .= "</div>";
+          push(@$d,dclone $s);
+          $entries->{'all'}{$s->{dir}.$i.' '.$s->{deststring}} = $o;
+          }
         }
       }
     } 
 
- if ($tags =~ /destination/) {
+  if ($tags =~ /destination/) {
     my $key = 'destination';
     my $dest = $db->{node}{$sign}{'tags'}{$key};
     my @dests;
@@ -679,16 +735,20 @@ sub parseData {
     
     }    
     
-    
+#     print Dumper $d;
 #Information added to sign  
   $o = '';
   if(defined $d && scalar @$d) {
-    $sign = $d->[-1]{sign};
+    $sign = $d->[-1]{sign} // $sign;
     $o .= "<span><a href=\"".$db->{node}{$sign}{'tags'}{'image'}."\">Image</a></span>" if $db->{node}{$sign}{'tags'}{'image'};
-    $o .= "<span><a href=\"http://www.mapillary.com/map/im/".$db->{node}{$sign}{'tags'}{'mapillary'}."\">Mapillary</a></span>" if $db->{node}{$sign}{'tags'}{'mapillary'};
+    
+    $o .= "<span><a href=\"http://www.mapillary.com/map/im/".$db->{node}{$sign}{'tags'}{'mapillary'}."\">Mapillary</a></span>" if $db->{node}{$sign}{'tags'}{'mapillary'} && !$db->{node}{$sign}{'tags'}{'mapillary'} =~ /mapillary/;
+    $o .= "<span><a href=\"".$db->{node}{$sign}{'tags'}{'mapillary'}."\">Mapillary</a></span>" if $db->{node}{$sign}{'tags'}{'mapillary'} && $db->{node}{$sign}{'tags'}{'mapillary'} =~ /mapillary/;
+    
     $o .= "<span><a href=\"".$db->{node}{$sign}{'tags'}{'website'}."\">Website</a></span>" if $db->{node}{$sign}{'tags'}{'website'};
     $o .= "<span>Operator: $db->{node}{$sign}{'tags'}{'operator'}</span>" if $db->{node}{$sign}{'tags'}{'operator'};
-    
+    $o .= "<span><img src=\"../../osmc/generate.pl?osmc=:white:black_hiker&opt=rectborder&size=32&out=svg\"></span>" if $db->{node}{$sign}{'tags'}{'hiking'} eq 'yes' ;
+    $o .= "<span><img src=\"../../osmc/generate.pl?osmc=:white:black_bicycle&opt=rectborder&size=32&out=svg\"></span>" if $db->{node}{$sign}{'tags'}{'bicycle'} eq 'yes' ;
     if($o) {
       $o = "<div class=\"details\">".$o."</div>";
       }
