@@ -363,7 +363,7 @@ sub getSymbol {
 #check and convert times  
 sub fixTime {
   my ($o) = @_;  
-  if ($o =~ /^([0-9]?[0-9]):([0-9]?[0-9])$/) { 
+  if ($o =~ /^\s*([0-9]?[0-9]):([0-9]?[0-9])\s*$/) {
     return sprintf("%02i:%02i",$1,$2); 
     }
   if ($o =~ /^\s*([0-9]+)\s*h\s*([0-9]{0,2})\s*$/) {
