@@ -354,10 +354,21 @@ sub getRef {
 sub getSymbol {
   my ($r,$num) = @_;
   $num //= 0;
-  my @t = split(';',$db->{relation}{$r}{'tags'}{'destination:symbol'});
+  my @t = split(';',$db->{relation}{$r}{'tags'}{'destination:symbol'},-1);
   if($t[$num]) {
     return $t[$num];
     }  
+  }
+
+sub getOsmc {
+  my ($r,$num) = @_;
+  $num //= 0;
+  return unless ($db->{relation}{$r}{'tags'}{'osmc:symbol'});
+  my @t = split(';',$db->{relation}{$r}{'tags'}{'osmc:symbol'},-1);
+  if(scalar @t > $num && ($t[$num] || $t[$num] eq "")) {
+    return $t[$num];
+    }
+  return $t[0];
   }
 
 #check and convert times  
@@ -586,7 +597,9 @@ sub parseData {
     
         $s->{duration} = getTime($w,$i);
         $s->{distance} = getDistance($w,$i);
-        $s->{symbol} = getSymbol($w,$i);
+        $s->{symbol}   = getSymbol($w,$i);
+        $s->{osmc}     = getOsmc($w,$i);
+
         getColours($w,$s);
         cleanValues($s);
         
@@ -628,9 +641,9 @@ sub parseData {
           
           $o .= "<div class=\"dura\">$s->{duration}$s->{distance}</div>";
           $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
-          if ($db->{relation}{$w}{'tags'}{'osmc:symbol'}) {
-            my $osmc = $db->{relation}{$w}{'tags'}{'osmc:symbol'};
-            $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$osmc."&opt=rectborder&size=32&out=svg\"></div>";
+          if ($s->{osmc}) {
+#             my $osmc = $db->{relation}{$w}{'tags'}{'osmc:symbol'};
+            $o .= "<div class=\"symbol\"><img src=\"../../osmc/generate.pl?osmc=".$s->{osmc}."&opt=rectborder&size=32&out=svg\"></div>";
             }
           elsif($s->{waysymbol} && scalar @{$s->{waysymbol}}) {
             $o .= "<div class=\"symbol\">";
