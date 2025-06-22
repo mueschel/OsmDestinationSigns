@@ -2,6 +2,8 @@ OSM Destination Signs
 =====================
 
 This is a tool to show information stored in OSM in the form of destination_sign relations or destination tags on ways.
+The code provided in this repository creates signs from relations and direction tags. Regular street destination signs are rendered by https://github.com/mueschel/OsmDestinationToSVG.
+
 
 Supported tagging features:
 ---
