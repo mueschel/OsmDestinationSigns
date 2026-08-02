@@ -639,7 +639,9 @@ sub parseData {
           $o .= "<br><span>$s->{wayname}</span>" if $s->{wayname} && defined $q->param('namedroutes');
           $o .= "</div>";
           
-          $o .= "<div class=\"dura\">$s->{duration}$s->{distance}</div>";
+          my $sep = "";
+             $sep = " / " if($s->{duration} && $s->{distance});
+          $o .= "<div class=\"dura\">$s->{duration}$sep$s->{distance}</div>";
           $o .= "<div class=\"symbol\"><div class=\"$s->{symbol}\">&nbsp;</div></div>" if $s->{symbol};
           if ($s->{osmc}) {
 #             my $osmc = $db->{relation}{$w}{'tags'}{'osmc:symbol'};
