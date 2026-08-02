@@ -21,7 +21,7 @@ div#key {
   width:200px;
   position:fixed;
   right:0;
-  top:0;
+  bottom:30px;
   background:#f2f5f7;
   border:1px solid white;
 }

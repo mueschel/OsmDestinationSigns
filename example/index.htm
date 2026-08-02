@@ -65,7 +65,7 @@ guideposts as well as "destination" tags on highways and guideposts.</strong>
       <option value="275664964">275664964 - with various from's
       <option value="4554236964">4554236964 - with many from; time and distance
     </select></label>
-    Country <select name="country" onChange="updatelink()"><option value="DE">Germany<option value="AT">Austria<option value="FR">France<option value="IT">Italy<option value="PT">Portugal<option value="SR">Serbia</select><br> 
+    Country <select name="country" onChange="updatelink()"><option value="DE">Germany<option value="AT">Austria<option value="FR">France<option value="GR">Greece<option value="IT">Italy<option value="PT">Portugal<option value="SR">Serbia</select><br>
 
     <input type="checkbox" name="namedroutes" checked="checked" onChange="updatelink()"> Add names of routes</input>
     <br><input type="checkbox" name="fromarrow" checked="checked" onChange="updatelink()"> Show hollow arrows as seen from sign</input>
@@ -99,10 +99,34 @@ var endpoint = "https://osm.mueschelsoft.de/overpass/";
 var currentType = 'node';
 var map = L.map('map').setView([46.72539, 11.42286], 14);
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>' }).addTo(map);
+var baseosm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { attribution: 'Map &copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a> contributors' }).addTo(map);
+
+var wthiking =  L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            opacity: 0.7,
+            attribution: 'Map &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors | Trails &copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
+        });
+var wtmtb =  L.tileLayer('https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            opacity: 0.7,
+            attribution: 'Map &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors | Trails &copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
+        });
+var wtbicycle =  L.tileLayer('https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            opacity: 0.7,
+            attribution: 'Map &copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors | Trails &copy; <a href="https://waymarkedtrails.org">Waymarked Trails</a>'
+        });
+const overlays = {"Waymarks Trails hiking":wthiking,
+                  "Waymarks Trails mtb":wtmtb,
+                  "Waymarks Trails bicycle":wtbicycle};
+const basemap = {"OSM":baseosm};
+
+
+
 
 map.addControl(new L.Control.Permalink({text: 'Permalink'}));
+L.control.layers(basemap,overlays).addTo(map);
 
 var hash = (location.hash ||'').replace(/^#/,'').split('&');
 var namedroutes = true;
